@@ -10,7 +10,6 @@ const NAV_ITEMS = [
   { label: "برندها", href: "#brands" },
   { label: "تخفیف‌ها", href: "#discounts" },
   { label: "درباره ما", href: "#about" },
-  { label: "تماس", href: "#contact" },
 ] as const;
 
 type NavItem = (typeof NAV_ITEMS)[number];
@@ -48,8 +47,18 @@ function MobileMenu() {
         className="md:hidden flex items-center justify-center w-10 h-10 rounded-full text-kalako-navy hover:bg-kalako-slate-100 transition-colors"
         aria-label="باز کردن منو"
       >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
         </svg>
       </button>
 
@@ -73,8 +82,18 @@ function MobileMenu() {
             className="flex items-center justify-center w-10 h-10 rounded-full text-kalako-slate-500 hover:text-kalako-navy hover:bg-kalako-slate-100 transition-colors"
             aria-label="بستن منو"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -104,8 +123,18 @@ function MobileMenu() {
         {/* دکمه ورود */}
         <div className="mt-auto p-4">
           <button className="w-full flex items-center justify-center gap-2 rounded-full bg-kalako-navy text-white py-3 text-sm font-medium hover:bg-kalako-navy-light transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
             ورود / ثبت‌نام
           </button>
@@ -139,7 +168,13 @@ export function Navbar() {
             className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-kalako-slate-500 hover:text-kalako-red hover:bg-red-50 transition-colors"
             aria-label="علاقه‌مندی‌ها"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -150,8 +185,18 @@ export function Navbar() {
 
           {/* دکمه ورود (دسکتاپ) */}
           <button className="hidden md:flex items-center gap-2 rounded-full bg-kalako-navy text-white px-5 py-2.5 text-sm font-medium hover:bg-kalako-navy-light transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
             ورود / ثبت‌نام
           </button>
