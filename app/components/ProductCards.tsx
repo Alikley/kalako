@@ -1,17 +1,12 @@
 "use client";
 
-import { Product } from "@/hook/useStore";
 import React from "react";
+import { useStore, type Product } from "@/hook/useStore";
+import { useSearchProducts } from "@/hook/useSearchProducts";
+import { useProducts } from "@/hook/useProducts";
 
-interface ProductCardsProps {
-  products: Product[];
-  loading?: boolean;
-  error?: string | null;
-  searchMode?: boolean;
-  searchQuery?: string;
-  getImageUrl: (product: Product) => string | null;
-  onReset?: () => void;
-}
+const BOT_URL =
+  process.env.NEXT_PUBLIC_BOT_API_URL || "http://localhost:3001";
 
 function HeartIcon({
   filled,
@@ -75,29 +70,33 @@ function ExternalLinkIcon({ className }: { className?: string }) {
   );
 }
 
-function ProductCard({
-  product,
-  imageUrl,
-}: {
-  product: Product;
-  imageUrl: string | null;
-}) {
-  const [liked, setLiked] = React.useState(false);
+function ProductCard({ product }: { product: Product }) {
+  const { likes, toggleLike } = useStore();
+  const isLiked = likes.includes(product.id);
   const priceFormatted = product.price
     ? product.price.toLocaleString("fa-IR")
     : null;
+  const [imgError, setImgError] = React.useState(false);
 
-  const dateStr = new Date(product.date).toLocaleDateString("fa-IR");
+  let dateStr = "";
+  if (product.date) {
+    try {
+      dateStr = new Date(product.date).toLocaleDateString("fa-IR");
+    } catch {
+      dateStr = "";
+    }
+  }
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)] transition-shadow duration-300 group">
       <div className="relative bg-[#F3F4F6] aspect-[3/4] overflow-hidden">
-        {imageUrl ? (
+        {!imgError && product.image ? (
           <img
-            src={imageUrl}
+            src={product.image}
             alt={product.title}
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-kalako-slate-300">
@@ -118,20 +117,26 @@ function ProductCard({
         )}
 
         <button
-          onClick={() => setLiked(!liked)}
+          onClick={() => toggleLike(product.id)}
           className={`absolute top-3 left-3 w-8 h-8 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors duration-200 ${
-            liked
+            isLiked
               ? "bg-red-50 text-kalako-red"
               : "bg-white/80 text-kalako-slate-400 hover:text-kalako-red"
           }`}
-          aria-label={liked ? "حذف از علاقه‌مندی" : "افزودن به علاقه‌مندی"}
+          aria-label={isLiked ? "\u062d\u0630\u0641 \u0627\u0632 \u0639\u0644\u0627\u0642\u0647\u200c\u0645\u0646\u062f\u06cc" : "\u0627\u0641\u0632\u0648\u062f\u0646 \u0628\u0647 \u0639\u0644\u0627\u0642\u0647\u200c\u0645\u0646\u062f\u06cc"}
         >
-          <HeartIcon className="w-4 h-4" filled={liked} />
+          <HeartIcon className="w-4 h-4" filled={isLiked} />
         </button>
 
-        {product.views > 0 && (
+        {product.discount && (
+          <span className="absolute top-3 right-3 bg-kalako-red text-white text-[11px] font-bold px-2 py-0.5 rounded-lg">
+            {product.discount}
+          </span>
+        )}
+
+        {(product.views ?? 0) > 0 && (
           <span className="absolute bottom-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-lg">
-            {product.views.toLocaleString("fa-IR")} بازدید
+            {(product.views ?? 0).toLocaleString("fa-IR")} {"\u0628\u0627\u0632\u062f\u06cc\u062f"}
           </span>
         )}
       </div>
@@ -144,7 +149,7 @@ function ProductCard({
         <div className="flex items-center gap-1.5 bg-kalako-slate-100 rounded-lg px-2.5 py-1.5 self-start">
           <ChannelIcon className="w-3.5 h-3.5 text-kalako-slate-400" />
           <span className="text-[11px] text-kalako-slate-500 font-medium">
-            {product.channelTitle || product.channelId}
+            {product.channel}
           </span>
         </div>
 
@@ -153,12 +158,12 @@ function ProductCard({
             <span className="text-[15px] font-bold text-kalako-orange">
               {priceFormatted}
               <span className="text-[11px] font-normal text-kalako-slate-500 mr-1">
-                تومان
+                {"\u062a\u0648\u0645\u0627\u0646"}
               </span>
             </span>
           ) : (
             <span className="text-[13px] text-kalako-slate-400">
-              قیمت نامشخص
+              {"\u0642\u06cc\u0645\u062a \u0646\u0627\u0645\u0634\u062e\u0635"}
             </span>
           )}
         </div>
@@ -168,17 +173,21 @@ function ProductCard({
           <span className="text-[11px] text-kalako-slate-500">{dateStr}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        {product.link ? (
           <a
             href={product.link}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 bg-kalako-navy text-white text-[13px] font-medium py-2.5 rounded-xl hover:bg-kalako-navy-light transition-colors duration-200 text-center flex items-center justify-center gap-1.5"
           >
-            مشاهده در تلگرام
+            {"\u0645\u0634\u0627\u0647\u062f\u0647 \u062f\u0631 \u062a\u0644\u06af\u0631\u0627\u0645"}
             <ExternalLinkIcon className="w-3.5 h-3.5" />
           </a>
-        </div>
+        ) : (
+          <div className="flex-1 bg-kalako-slate-200 text-kalako-slate-400 text-[13px] font-medium py-2.5 rounded-xl text-center">
+            {"\u0644\u06cc\u0646\u06a9 \u0645\u0648\u062c\u0648\u062f \u0646\u06cc\u0633\u062a"}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -205,15 +214,84 @@ function LoadingSkeleton() {
   );
 }
 
-export function ProductCards({
-  products,
-  loading,
-  error,
-  searchMode,
-  searchQuery,
-  getImageUrl,
-  onReset,
-}: ProductCardsProps) {
+export function ProductCards() {
+  const { products, loading, error, refetch } = useProducts();
+  const {
+    products: searchResults,
+    loading: searchLoading,
+    error: searchError,
+    searchMode,
+    searchQuery,
+    search,
+    reset,
+  } = useSearchProducts();
+
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail?.query) {
+        search(e.detail.query);
+      }
+    };
+    window.addEventListener("kalako:search", handler);
+    return () => window.removeEventListener("kalako:search", handler);
+  }, [search]);
+
+  if (searchLoading) return <LoadingSkeleton />;
+
+  if (searchError) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
+        <p className="text-kalako-slate-500 text-sm mb-4">{searchError}</p>
+        <button
+          onClick={reset}
+          className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+        >
+          {"\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0645\u062d\u0635\u0648\u0644\u0627\u062a"}
+        </button>
+      </div>
+    );
+  }
+
+  if (searchMode) {
+    if (searchResults.length === 0) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
+          <svg
+            className="w-16 h-16 text-kalako-slate-300 mb-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <p className="text-kalako-slate-500 text-sm">
+            {"\u0646\u062a\u06cc\u062c\u0647\u200c\u0627\u06cc \u0628\u0631\u0627\u06cc \u00ab"}{searchQuery}{"\u00bb \u067e\u06cc\u062f\u0627 \u0646\u0634\u062f"}
+          </p>
+          <button
+            onClick={reset}
+            className="mt-3 text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+          >
+            {"\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0645\u062d\u0635\u0648\u0644\u0627\u062a"}
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="flex-1 min-w-0">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {searchResults.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (loading) return <LoadingSkeleton />;
 
   if (error) {
@@ -232,15 +310,18 @@ export function ProductCards({
             d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
           />
         </svg>
-        <p className="text-kalako-slate-500 text-sm mb-4">{error}</p>
-        {onReset && (
-          <button
-            onClick={onReset}
-            className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
-          >
-            تلاش مجدد
-          </button>
-        )}
+        <p className="text-kalako-slate-500 text-sm mb-2">
+          {"\u062e\u0637\u0627 \u062f\u0631 \u062f\u0631\u06cc\u0627\u0641\u062a \u0645\u062d\u0635\u0648\u0644\u0627\u062a \u0627\u0632 \u0631\u0628\u0627\u062a"}
+        </p>
+        <p className="text-kalako-slate-400 text-xs mb-4">
+          {"\u0645\u0637\u0645\u0626\u0646 \u0634\u0648\u06cc\u062f \u0631\u0628\u0627\u062a \u0631\u0648\u06cc \u067e\u0648\u0631\u062a 3001 \u062f\u0631 \u062d\u0627\u0644 \u0627\u062c\u0631\u0627\u0633\u062a"}
+        </p>
+        <button
+          onClick={refetch}
+          className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+        >
+          {"\u062a\u0644\u0627\u0634 \u0645\u062c\u062f\u062f"}
+        </button>
       </div>
     );
   }
@@ -261,19 +342,13 @@ export function ProductCards({
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
-        <p className="text-kalako-slate-500 text-sm">
-          {searchMode
-            ? `نتیجه‌ای برای «${searchQuery}» پیدا نشد`
-            : "محصولی یافت نشد"}
-        </p>
-        {searchMode && onReset && (
-          <button
-            onClick={onReset}
-            className="mt-3 text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
-          >
-            بازگشت به محصولات
-          </button>
-        )}
+        <p className="text-kalako-slate-500 text-sm">{"\u0645\u062d\u0635\u0648\u0644\u06cc \u06cc\u0627\u0641\u062a \u0646\u0634\u062f"}</p>
+        <button
+          onClick={refetch}
+          className="mt-3 text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+        >
+          {"\u062a\u0644\u0627\u0634 \u0645\u062c\u062f\u062f"}
+        </button>
       </div>
     );
   }
@@ -281,12 +356,8 @@ export function ProductCards({
   return (
     <div className="flex-1 min-w-0">
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            imageUrl={getImageUrl(product)}
-          />
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} />
         ))}
       </div>
     </div>

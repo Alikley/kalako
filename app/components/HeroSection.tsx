@@ -43,19 +43,12 @@ function FeatureCard({ title, desc, icon }: { title: string; desc: string; icon:
         {icon}
       </div>
       <h4 className="font-bold text-sm text-kalako-navy mb-1">{title}</h4>
-      <p className="text-[11px] text-kalako-slate-500 text-center leading-relaxed">
-        {desc}
-      </p>
+      <p className="text-[11px] text-kalako-slate-500 text-center leading-relaxed">{desc}</p>
     </div>
   );
 }
 
-interface HeroSectionProps {
-  onSearch: (query: string) => void;
-  searchLoading?: boolean;
-}
-
-export function HeroSection({ onSearch, searchLoading = false }: HeroSectionProps) {
+export function HeroSection() {
   return (
     <section className="relative w-full bg-kalako-cream overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
@@ -69,9 +62,7 @@ export function HeroSection({ onSearch, searchLoading = false }: HeroSectionProp
               <svg className="w-5 h-5 text-kalako-orange fill-kalako-orange" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
-              <span className="text-kalako-orange font-bold text-base tracking-wide">
-                جستجو، کنکاش، پیدا!
-              </span>
+              <span className="text-kalako-orange font-bold text-base tracking-wide">جستجو، کنکاش، پیدا!</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-kalako-navy leading-tight mb-6 tracking-tight">
@@ -88,7 +79,7 @@ export function HeroSection({ onSearch, searchLoading = false }: HeroSectionProp
           </div>
 
           <div className="lg:col-span-7 flex flex-col gap-8 pt-4">
-            <SearchBar onSearch={onSearch} loading={searchLoading} />
+            <SearchBar />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl w-full">
               <FeatureCard title="جستجوی هوشمند" desc="با هوش مصنوعی جستجو کنید" icon={<IconSmartSearch />} />
               <FeatureCard title="فیلتر دقیق" desc="بر اساس نیاز خود جستجو" icon={<IconFilter />} />

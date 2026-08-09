@@ -11,6 +11,10 @@ export interface Product {
   shipping: string;
   channel: string;
   image: string;
+  link?: string;
+  date?: string;
+  views?: number;
+  channelId?: string;
 }
 
 export const CATEGORIES = [

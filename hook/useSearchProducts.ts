@@ -1,123 +1,60 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
+import type { Product } from "./useStore";
 
-export interface Product {
-  id: string;
-  channelId: string;
-  channelTitle: string;
-  title: string;
-  text: string;
-  price: number | null;
-  score: number | null;
-  date: number;
-  views: number;
-  hasPhoto: boolean;
-  link: string;
-}
-
-interface ApiResponse {
-  products: Product[];
-  total: number;
-  error?: string;
-}
+const BOT_URL = process.env.NEXT_PUBLIC_BOT_API_URL || "http://localhost:3001";
 
 export function useSearchProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/products");
-      const data: ApiResponse = await res.json();
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setProducts(data.products || []);
-        setTotal(data.total || 0);
-      }
-    } catch {
-      setError("خطا در بارگذاری محصولات");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const search = useCallback(async (
-    query: string,
-    options?: { gender?: string; priceMin?: number; priceMax?: number }
-  ) => {
+  const search = useCallback(async (query: string) => {
     if (!query || query.trim().length < 2) return;
-
-    const trimmed = query.trim();
-    setSearchQuery(trimmed);
-    setSearchMode(true);
     setLoading(true);
     setError(null);
-
+    setSearchMode(true);
+    setSearchQuery(query);
     try {
-      const res = await fetch("/api/search", {
+      const res = await fetch(`${BOT_URL}/api/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: trimmed,
-          gender: options?.gender,
-          priceMin: options?.priceMin,
-          priceMax: options?.priceMax,
-        }),
+        body: JSON.stringify({ query: query.trim() }),
       });
-      const data: ApiResponse & { query?: string } = await res.json();
-
-      if (data.error) {
-        setError(data.error);
-        setProducts([]);
-      } else {
-        setProducts(data.products || []);
-        setTotal(data.total || 0);
-      }
-    } catch {
-      setError("خطا در جستجو");
-      setProducts([]);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const mapped: Product[] = (data.products || []).map((p: any) => ({
+        id: p.id,
+        title: p.title || "\u0645\u062d\u0635\u0648\u0644",
+        price: p.price,
+        oldPrice: p.oldPrice || null,
+        discount: p.oldPrice && p.price ? Math.round((1 - Number(p.price) / Number(p.oldPrice)) * 100) + "%" : p.discount || null,
+        badge: p.score && p.score > 0.8 ? "\u067e\u06cc\u0634\u0646\u0647\u0627\u062f" : null,
+        shipping: "\u0627\u0631\u0633\u0627\u0644 \u0627\u0632 \u062a\u0644\u06af\u0631\u0627\u0645",
+        channel: p.channelTitle || p.channelId || "",
+        channelId: p.channelId || "",
+        image: p.imageUrl || `${BOT_URL}/api/image/${encodeURIComponent(p.channelId || "")}/${p.id?.toString().split("_")[1] || 0}`,
+        date: p.date || "",
+        views: p.views || 0,
+        link: p.link || "",
+      }));
+      setProducts(mapped);
+    } catch (e: any) {
+      setError(e.message || "\u062e\u0637\u0627 \u062f\u0631 \u062c\u0633\u062a\u062c\u0648");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const resetToHome = useCallback(() => {
+  const reset = useCallback(() => {
+    setProducts([]);
     setSearchMode(false);
     setSearchQuery("");
     setError(null);
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const getImageUrl = useCallback((product: Product) => {
-    if (!product.hasPhoto) return null;
-    const parts = product.id.split("_");
-    const channelId = parts[0];
-    const postId = parts.slice(1).join("_");
-    return `/api/image/${channelId}/${postId}`;
   }, []);
 
-  return {
-    products,
-    total,
-    loading,
-    error,
-    searchMode,
-    searchQuery,
-    search,
-    resetToHome,
-    getImageUrl,
-    refetch: fetchProducts,
-  };
+  return { products, loading, error, searchMode, searchQuery, search, reset };
 }

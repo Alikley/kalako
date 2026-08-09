@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { KalakoLogo } from "./KalakoLogo";
 import { useStore, CATEGORIES, BRANDS } from "@/hook/useStore";
 
-/* ── Chevron SVG ── */
+/* Chevron SVG */
 function ChevronDown({ className }: { className?: string }) {
   return (
     <svg
@@ -21,7 +21,7 @@ function ChevronDown({ className }: { className?: string }) {
   );
 }
 
-/* ── Heart SVG ── */
+/* Heart SVG */
 function HeartIcon() {
   return (
     <svg
@@ -40,7 +40,7 @@ function HeartIcon() {
   );
 }
 
-/* ── Cart SVG ── */
+/* Cart SVG */
 function CartIcon() {
   return (
     <svg
@@ -59,7 +59,7 @@ function CartIcon() {
   );
 }
 
-/* ── User SVG ── */
+/* User SVG */
 function UserIcon() {
   return (
     <svg
@@ -78,7 +78,7 @@ function UserIcon() {
   );
 }
 
-/* ── Dropdown Item ── */
+/* Dropdown Item */
 function DropItem({
   href,
   children,
@@ -96,7 +96,7 @@ function DropItem({
   );
 }
 
-/* ── NavDropdown ── */
+/* NavDropdown */
 function NavDropdown({
   label,
   children,
@@ -119,7 +119,7 @@ function NavDropdown({
   );
 }
 
-/* ── MobileMenu ── */
+/* MobileMenu */
 function MobileMenu() {
   const [open, setOpen] = useState(false);
   const likes = useStore((s) => s.likes);
@@ -191,7 +191,7 @@ function MobileMenu() {
               key={`d-${c}`}
               href={`/discounts?cat=${encodeURIComponent(c)}`}
             >
-              تخفیف {c}
+              {"تخفیف "}{c}
             </DropItem>
           ))}
           <DropItem href="/about">درباره ما</DropItem>
@@ -216,7 +216,7 @@ function MobileMenu() {
             onClick={() => setOpen(false)}
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-kalako-navy text-white text-sm font-medium"
           >
-            <UserIcon /> ورود
+            <UserIcon /> {"ورود"}
           </Link>
         </div>
       </div>
@@ -224,7 +224,7 @@ function MobileMenu() {
   );
 }
 
-/* ════ Navbar ════ */
+/* Navbar */
 export function Navbar() {
   const pathname = usePathname();
   const likes = useStore((s) => s.likes);
@@ -242,7 +242,7 @@ export function Navbar() {
             href="/"
             className={`py-2 text-sm font-medium transition-colors ${pathname === "/" ? "text-kalako-navy" : "text-kalako-slate-500 hover:text-kalako-navy"}`}
           >
-            خانه
+            {"خانه"}
           </Link>
 
           <NavDropdown label="دسته‌بندی‌ها">
@@ -270,7 +270,7 @@ export function Navbar() {
                 key={c}
                 href={`/discounts?cat=${encodeURIComponent(c)}`}
               >
-                تخفیف {c}
+                {"تخفیف "}{c}
               </DropItem>
             ))}
           </NavDropdown>
@@ -279,7 +279,7 @@ export function Navbar() {
             href="/about"
             className={`py-2 text-sm font-medium transition-colors ${pathname === "/about" ? "text-kalako-navy" : "text-kalako-slate-500 hover:text-kalako-navy"}`}
           >
-            درباره ما
+            {"درباره ما"}
           </Link>
         </nav>
 
@@ -310,7 +310,7 @@ export function Navbar() {
             href="/login"
             className="hidden md:flex items-center gap-2 bg-kalako-navy text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-kalako-navy-light transition-colors"
           >
-            <UserIcon /> ورود / ثبت‌نام
+            <UserIcon /> {"ورود / ثبت‌نام"}
           </Link>
           <MobileMenu />
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Product } from "./useProducts";
+import type { Product } from "./useStore";
 
 interface SearchResponse {
   products: Product[];
