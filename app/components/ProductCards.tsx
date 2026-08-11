@@ -5,9 +5,6 @@ import { useStore, type Product } from "@/hook/useStore";
 import { useSearchProducts } from "@/hook/useSearchProducts";
 import { useProducts } from "@/hook/useProducts";
 
-const BOT_URL =
-  process.env.NEXT_PUBLIC_BOT_API_URL || "http://localhost:3001";
-
 function HeartIcon({
   filled,
   className,
@@ -123,7 +120,7 @@ function ProductCard({ product }: { product: Product }) {
               ? "bg-red-50 text-kalako-red"
               : "bg-white/80 text-kalako-slate-400 hover:text-kalako-red"
           }`}
-          aria-label={isLiked ? "\u062d\u0630\u0641 \u0627\u0632 \u0639\u0644\u0627\u0642\u0647\u200c\u0645\u0646\u062f\u06cc" : "\u0627\u0641\u0632\u0648\u062f\u0646 \u0628\u0647 \u0639\u0644\u0627\u0642\u0647\u200c\u0645\u0646\u062f\u06cc"}
+          aria-label={isLiked ? "حذف از علاقه‌مندی" : "افزودن به علاقه‌مندی"}
         >
           <HeartIcon className="w-4 h-4" filled={isLiked} />
         </button>
@@ -136,7 +133,7 @@ function ProductCard({ product }: { product: Product }) {
 
         {(product.views ?? 0) > 0 && (
           <span className="absolute bottom-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-lg">
-            {(product.views ?? 0).toLocaleString("fa-IR")} {"\u0628\u0627\u0632\u062f\u06cc\u062f"}
+            {(product.views ?? 0).toLocaleString("fa-IR")} {"بازدید"}
           </span>
         )}
       </div>
@@ -158,12 +155,12 @@ function ProductCard({ product }: { product: Product }) {
             <span className="text-[15px] font-bold text-kalako-orange">
               {priceFormatted}
               <span className="text-[11px] font-normal text-kalako-slate-500 mr-1">
-                {"\u062a\u0648\u0645\u0627\u0646"}
+                {"تومان"}
               </span>
             </span>
           ) : (
             <span className="text-[13px] text-kalako-slate-400">
-              {"\u0642\u06cc\u0645\u062a \u0646\u0627\u0645\u0634\u062e\u0635"}
+              {"قیمت نامشخص"}
             </span>
           )}
         </div>
@@ -180,12 +177,12 @@ function ProductCard({ product }: { product: Product }) {
             rel="noopener noreferrer"
             className="flex-1 bg-kalako-navy text-white text-[13px] font-medium py-2.5 rounded-xl hover:bg-kalako-navy-light transition-colors duration-200 text-center flex items-center justify-center gap-1.5"
           >
-            {"\u0645\u0634\u0627\u0647\u062f\u0647 \u062f\u0631 \u062a\u0644\u06af\u0631\u0627\u0645"}
+            {"مشاهده در تلگرام"}
             <ExternalLinkIcon className="w-3.5 h-3.5" />
           </a>
         ) : (
           <div className="flex-1 bg-kalako-slate-200 text-kalako-slate-400 text-[13px] font-medium py-2.5 rounded-xl text-center">
-            {"\u0644\u06cc\u0646\u06a9 \u0645\u0648\u062c\u0648\u062f \u0646\u06cc\u0633\u062a"}
+            {"لینک موجود نیست"}
           </div>
         )}
       </div>
@@ -214,12 +211,79 @@ function LoadingSkeleton() {
   );
 }
 
+/**
+ * v4.10: وضعیت بات — نشان میده ربات چیه
+ */
+function BotStatusBadge({ meta }: { meta: any }) {
+  if (!meta) return null;
+
+  if (meta.connectionError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+        <div className="flex items-center gap-2 text-red-700 text-sm">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <span className="font-medium">ربات در دسترس نیست</span>
+        </div>
+        <p className="text-red-600 text-xs mt-1 mr-7">
+          مطمئن شوید ربات clothes_bot روی پورت 3001 اجرا شده است
+        </p>
+      </div>
+    );
+  }
+
+  if (meta.searching) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+        <div className="flex items-center gap-2 text-amber-700 text-sm">
+          <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          <span>در حال جستجو در کانال‌های تلگرام...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (meta.botError) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+        <div className="flex items-center gap-2 text-amber-700 text-sm">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="font-medium">خطا در جستجوی تلگرام</span>
+        </div>
+        <p className="text-amber-600 text-xs mt-1 mr-7">
+          {meta.botError}
+          {meta.botHint && ` — ${meta.botHint}`}
+        </p>
+      </div>
+    );
+  }
+
+  if (meta.stale) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4">
+        <div className="flex items-center gap-2 text-blue-700 text-sm">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>نمایش نتایج کش شده — تلگرام در حال اتصال مجدد</span>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export function ProductCards() {
-  const { products, loading, error, refetch } = useProducts();
+  const { products, loading, error, meta, refetch } = useProducts();
   const {
     products: searchResults,
     loading: searchLoading,
     error: searchError,
+    hint: searchHint,
     searchMode,
     searchQuery,
     search,
@@ -241,13 +305,37 @@ export function ProductCards() {
   if (searchError) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-kalako-slate-500 text-sm mb-4">{searchError}</p>
-        <button
-          onClick={reset}
-          className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+        <svg
+          className="w-16 h-16 text-kalako-slate-300 mb-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1}
         >
-          {"\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0645\u062d\u0635\u0648\u0644\u0627\u062a"}
-        </button>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+          />
+        </svg>
+        <p className="text-kalako-red text-sm font-medium mb-2">{searchError}</p>
+        {searchHint && (
+          <p className="text-kalako-slate-400 text-xs mb-4 max-w-md">{searchHint}</p>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={reset}
+            className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+          >
+            {"بازگشت به محصولات"}
+          </button>
+          <button
+            onClick={() => search(searchQuery)}
+            className="text-kalako-navy hover:text-kalako-navy-light text-sm font-medium"
+          >
+            {"تلاش مجدد"}
+          </button>
+        </div>
       </div>
     );
   }
@@ -270,13 +358,16 @@ export function ProductCards() {
             />
           </svg>
           <p className="text-kalako-slate-500 text-sm">
-            {"\u0646\u062a\u06cc\u062c\u0647\u200c\u0627\u06cc \u0628\u0631\u0627\u06cc \u00ab"}{searchQuery}{"\u00bb \u067e\u06cc\u062f\u0627 \u0646\u0634\u062f"}
+            {"نتیجه‌ای برای «"}{searchQuery}{"» پیدا نشد"}
+          </p>
+          <p className="text-kalako-slate-400 text-xs mt-2">
+            جستجو در کانال‌های تلگرام انجام شد ولی محصولی یافت نشد
           </p>
           <button
             onClick={reset}
-            className="mt-3 text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+            className="mt-4 text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
           >
-            {"\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0645\u062d\u0635\u0648\u0644\u0627\u062a"}
+            {"بازگشت به محصولات"}
           </button>
         </div>
       );
@@ -297,6 +388,7 @@ export function ProductCards() {
   if (error) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
+        <BotStatusBadge meta={meta} />
         <svg
           className="w-16 h-16 text-kalako-slate-300 mb-4"
           fill="none"
@@ -311,16 +403,16 @@ export function ProductCards() {
           />
         </svg>
         <p className="text-kalako-slate-500 text-sm mb-2">
-          {"\u062e\u0637\u0627 \u062f\u0631 \u062f\u0631\u06cc\u0627\u0641\u062a \u0645\u062d\u0635\u0648\u0644\u0627\u062a \u0627\u0632 \u0631\u0628\u0627\u062a"}
+          {"خطا در دریافت محصولات از ربات"}
         </p>
         <p className="text-kalako-slate-400 text-xs mb-4">
-          {"\u0645\u0637\u0645\u0626\u0646 \u0634\u0648\u06cc\u062f \u0631\u0628\u0627\u062a \u0631\u0648\u06cc \u067e\u0648\u0631\u062a 3001 \u062f\u0631 \u062d\u0627\u0644 \u0627\u062c\u0631\u0627\u0633\u062a"}
+          {error}
         </p>
         <button
           onClick={refetch}
           className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
         >
-          {"\u062a\u0644\u0627\u0634 \u0645\u062c\u062f\u062f"}
+          {"تلاش مجدد"}
         </button>
       </div>
     );
@@ -329,6 +421,7 @@ export function ProductCards() {
   if (products.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
+        <BotStatusBadge meta={meta} />
         <svg
           className="w-16 h-16 text-kalako-slate-300 mb-4"
           fill="none"
@@ -342,12 +435,17 @@ export function ProductCards() {
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
-        <p className="text-kalako-slate-500 text-sm">{"\u0645\u062d\u0635\u0648\u0644\u06cc \u06cc\u0627\u0641\u062a \u0646\u0634\u062f"}</p>
+        <p className="text-kalako-slate-500 text-sm">{"محصولی یافت نشد"}</p>
+        <p className="text-kalako-slate-400 text-xs mt-2">
+          {meta?.botError
+            ? "جستجوی تلگرام با خطا مواجه شد. دوباره تلاش کنید."
+            : "ربات در حال شروع به کار است. چند ثانیه دیگر دوباره تلاش کنید."}
+        </p>
         <button
           onClick={refetch}
-          className="mt-3 text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+          className="mt-4 text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
         >
-          {"\u062a\u0644\u0627\u0634 \u0645\u062c\u062f\u062f"}
+          {"تلاش مجدد"}
         </button>
       </div>
     );
@@ -355,6 +453,7 @@ export function ProductCards() {
 
   return (
     <div className="flex-1 min-w-0">
+      <BotStatusBadge meta={meta} />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {products.map((p) => (
           <ProductCard key={p.id} product={p} />

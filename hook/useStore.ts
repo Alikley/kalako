@@ -1,11 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+/**
+ * v1.0.0.5.12:
+ *  - fix: id از number به string تغییر کرد (بات "channelId_postId" برمی‌گردونه)
+ *  - fix: price و oldPrice از string به number | null (بات عدد برمی‌گردونه)
+ */
 export interface Product {
-  id: number;
+  id: string;
   title: string;
-  price: string;
-  oldPrice: string | null;
+  price: number | null;
+  oldPrice: number | null;
   discount: string | null;
   badge: string | null;
   shipping: string;
@@ -18,34 +23,34 @@ export interface Product {
 }
 
 export const CATEGORIES = [
-  "\u062a\u06cc\u200c\u0634\u0631\u062a",
-  "\u0634\u0644\u0648\u0627\u0631",
-  "\u06a9\u062a\u0648\u0646\u06cc",
-  "\u06a9\u0641\u0634",
-  "\u0644\u0628\u0627\u0633",
-  "\u0647\u0648\u062f\u06cc",
-  "\u0645\u0627\u0646\u062a\u0648",
-  "\u067e\u0627\u0644\u062a\u0648",
-  "\u0634\u0648\u0631\u062a",
-  "\u0644\u0648\u0627\u0632\u0645 \u062e\u0627\u0646\u0647",
+  "تی‌شرت",
+  "شلوار",
+  "کتونی",
+  "کفش",
+  "لباس",
+  "هودی",
+  "مانتو",
+  "پالتو",
+  "شورت",
+  "لوازم خانه",
 ];
 
 export const BRANDS = [
-  "\u0646\u0627\u06cc\u06a9\u06cc", "\u0622\u062f\u06cc\u062f\u0627\u0633", "\u067e\u0648\u0645\u0627", "\u0631\u06cc\u0628\u0648\u06a9",
-  "\u0646\u06cc\u0648\u0628\u0627\u0644\u0627\u0646\u0633", "\u06a9\u0646\u0648\u0631\u0633", "\u0644\u06cc\u0648\u0627\u06cc\u0632", "\u0632\u0627\u0631\u0627",
-  "\u0647\u0627\u06cc \u062f\u0646\u06cc\u0632", "\u067e\u0648\u0644\u0648", "\u0627\u06cc\u0646\u062f\u06cc\u0627\u0646", "\u0634\u06cc\u06a9\u0648",
-  "\u0647\u0648\u0645\u0646", "\u0645\u062c\u0644\u0633\u06cc", "\u0627\u0644 \u0633\u0627\u0639\u06cc",
-  "\u0628\u0648\u0634", "\u0646\u06cc\u0648\u06cc\u0645\u0628\u0631\u0627\u0646\u0633",
-  "\u0633\u0627\u0645\u0633\u0648\u0646\u06af", "\u0627\u0644 \u0627\u06cc", "\u0645\u06cc\u0632\u0648\u0646\u0648",
-  "\u0644\u0627\u06a9\u0648\u0633\u062a", "\u06af\u0627\u067e", "\u0627\u06cc\u0641\u0648\u0646",
+  "نایکی", "آدیداس", "پوما", "ریبوک",
+  "نیوبالانس", "کنورس", "لیوایز", "زارا",
+  "های دنیز", "پولو", "ایندیان", "شیکو",
+  "هومن", "مجلس", "ال ساعی",
+  "بوش", "نیویمبرانس",
+  "سامسونگ", "ال ای", "میزونو",
+  "لاکوست", "گاپ", "ایفون",
 ];
 
 interface StoreState {
-  likes: number[];
+  likes: string[];
   cart: Product[];
-  toggleLike: (id: number) => void;
+  toggleLike: (id: string) => void;
   addToCart: (p: Product) => void;
-  removeFromCart: (id: number) => void;
+  removeFromCart: (id: string) => void;
   clearCart: () => void;
 }
 

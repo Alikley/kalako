@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { CATEGORIES } from "@/hook/useStore";
 import type { Product } from "@/hook/useStore";
+import { formatPrice } from "@/lib/utils";
 
 function DiscountProducts({ cat }: { cat: string | null }) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -54,9 +55,9 @@ function DiscountProducts({ cat }: { cat: string | null }) {
           <div className="p-4">
             <h3 className="text-sm font-semibold text-kalako-navy line-clamp-2">{p.title}</h3>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-sm font-bold text-kalako-orange">{p.price}</p>
+              <p className="text-sm font-bold text-kalako-orange">{formatPrice(p.price)}</p>
               {p.oldPrice && (
-                <p className="text-xs text-kalako-slate-400 line-through">{p.oldPrice}</p>
+                <p className="text-xs text-kalako-slate-400 line-through">{formatPrice(p.oldPrice)}</p>
               )}
             </div>
           </div>

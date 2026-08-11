@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { CATEGORIES } from "@/hook/useStore";
 import { FilterSidebar } from "@/app/components/FilterSidebar";
 import type { Product } from "@/hook/useStore";
+import { formatPrice } from "@/lib/utils";
 
 function CategoryProducts({ cat }: { cat: string }) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -51,7 +52,7 @@ function CategoryProducts({ cat }: { cat: string }) {
           </div>
           <div className="p-4">
             <h3 className="text-sm font-semibold text-kalako-navy line-clamp-2">{p.title}</h3>
-            <p className="text-sm font-bold text-kalako-orange mt-2">{p.price}</p>
+            <p className="text-sm font-bold text-kalako-orange mt-2">{formatPrice(p.price)}</p>
           </div>
         </div>
       ))}

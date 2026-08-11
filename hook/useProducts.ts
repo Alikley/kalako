@@ -3,38 +3,61 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Product } from "./useStore";
 
-const BOT_URL = process.env.NEXT_PUBLIC_BOT_API_URL || "http://localhost:3001";
+export interface BotMeta {
+  cached?: boolean;
+  stale?: boolean;
+  searching?: boolean;
+  connectionError?: boolean;
+  botError?: string | null;
+  botHint?: string | null;
+  error?: string | null;
+  hint?: string | null;
+  source?: string;
+}
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [meta, setMeta] = useState<BotMeta | null>(null);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setMeta(null);
     try {
-      const res = await fetch(`${BOT_URL}/api/products`, { cache: "no-store" });
+      const res = await fetch("/api/products");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const mapped: Product[] = (data.products || []).map((p: any) => ({
-        id: p.id,
-        title: p.title || "\u0645حص\u0648\u0644",
-        price: p.price,
-        oldPrice: p.oldPrice || null,
-        discount: p.oldPrice && p.price ? Math.round((1 - Number(p.price) / Number(p.oldPrice)) * 100) + "%" : p.discount || null,
-        badge: p.score && p.score > 0.8 ? "\u067e\u06cc\u0634\u0646\u0647\u0627\u062f" : null,
-        shipping: "\u0627\u0631\u0633\u0627\u0644 \u0627\u0632 \u062a\u0644\u06af\u0631\u0627\u0645",
+        id: String(p.id),
+        title: p.title || "محصول",
+        price: p.price != null ? Number(p.price) : null,
+        oldPrice: p.oldPrice != null ? Number(p.oldPrice) : null,
+        discount:
+          p.oldPrice && p.price
+            ? Math.round((1 - Number(p.price) / Number(p.oldPrice)) * 100) + "%"
+            : null,
+        badge: p.score && p.score > 0.8 ? "پیشنهاد" : null,
+        shipping: "ارسال از تلگرام",
         channel: p.channelTitle || p.channelId || "",
         channelId: p.channelId || "",
-        image: p.imageUrl || `${BOT_URL}/api/image/${encodeURIComponent(p.channelId || "")}/${p.id?.toString().split("_")[1] || 0}`,
+        image: p.imageUrl || `/api/image/${encodeURIComponent(p.channelId || "")}/${String(p.id).split("_")[1] || 0}`,
         date: p.date || "",
         views: p.views || 0,
         link: p.link || "",
       }));
       setProducts(mapped);
+
+      // v5.12: Store metadata for better UX
+      if (data._meta) {
+        setMeta(data._meta);
+        if (data._meta.connectionError) {
+          setError(data._meta.error || "ربات در دسترس نیست");
+        }
+      }
     } catch (e: any) {
-      setError(e.message || "\u062e\u0637\u0627 \u062f\u0631 \u062f\u0631\u06cc\u0627\u0641\u062a \u0645\u062d\u0635\u0648\u0644\u0627\u062a");
+      setError(e.message || "خطا در دریافت محصولات");
     } finally {
       setLoading(false);
     }
@@ -44,5 +67,5 @@ export function useProducts() {
     fetchProducts();
   }, [fetchProducts]);
 
-  return { products, loading, error, refetch: fetchProducts };
+  return { products, loading, error, meta, refetch: fetchProducts };
 }

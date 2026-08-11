@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useStore, type Product } from "@/hook/useStore";
+import { formatPrice } from "@/lib/utils";
 
 export default function LikesPage() {
   const { likes } = useStore();
@@ -49,7 +50,7 @@ export default function LikesPage() {
                   {p.image && <img src={p.image} alt={p.title} className="w-full h-full object-contain" />}
                 </div>
                 <h3 className="text-sm font-semibold text-kalako-navy mb-2 line-clamp-2">{p.title}</h3>
-                <span className="text-sm font-bold text-kalako-orange">{p.price} تومان</span>
+                <span className="text-sm font-bold text-kalako-orange">{formatPrice(p.price)} تومان</span>
               </div>
             ))}
           </div>

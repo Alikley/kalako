@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useStore } from "@/hook/useStore";
+import { formatPrice } from "@/lib/utils";
 
 export default function CartPage() {
   const { cart, removeFromCart, clearCart } = useStore();
@@ -63,7 +64,7 @@ export default function CartPage() {
                     {item.title}
                   </h3>
                   <p className="text-sm font-bold text-kalako-orange mt-1">
-                    {item.price} تومان
+                    {formatPrice(item.price)} تومان
                   </p>
                 </div>
                 <button
