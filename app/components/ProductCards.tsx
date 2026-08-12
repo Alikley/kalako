@@ -41,6 +41,24 @@ function CheckCircleIcon({ className }: { className?: string }) {
   );
 }
 
+function CartPlusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 4.5v15m7.5-7.5h-15"
+      />
+    </svg>
+  );
+}
+
 function ChannelIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -68,8 +86,9 @@ function ExternalLinkIcon({ className }: { className?: string }) {
 }
 
 function ProductCard({ product }: { product: Product }) {
-  const { likes, toggleLike } = useStore();
+  const { likes, toggleLike, addToCart, cart } = useStore();
   const isLiked = likes.includes(product.id);
+  const inCart = cart.some((c) => c.id === product.id);
   const priceFormatted = product.price
     ? product.price.toLocaleString("fa-IR")
     : null;
@@ -143,11 +162,22 @@ function ProductCard({ product }: { product: Product }) {
           {product.title}
         </h3>
 
-        <div className="flex items-center gap-1.5 bg-kalako-slate-100 rounded-lg px-2.5 py-1.5 self-start">
+        <div className="flex items-center gap-1.5 self-start">
           <ChannelIcon className="w-3.5 h-3.5 text-kalako-slate-400" />
-          <span className="text-[11px] text-kalako-slate-500 font-medium">
-            {product.channel}
-          </span>
+          {product.channelId ? (
+            <a
+              href={`https://t.me/${product.channelId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-kalako-slate-500 font-medium hover:text-kalako-orange transition-colors"
+            >
+              {product.channel}
+            </a>
+          ) : (
+            <span className="text-[11px] text-kalako-slate-500 font-medium">
+              {product.channel}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -170,21 +200,18 @@ function ProductCard({ product }: { product: Product }) {
           <span className="text-[11px] text-kalako-slate-500">{dateStr}</span>
         </div>
 
-        {product.link ? (
-          <a
-            href={product.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 bg-kalako-navy text-white text-[13px] font-medium py-2.5 rounded-xl hover:bg-kalako-navy-light transition-colors duration-200 text-center flex items-center justify-center gap-1.5"
-          >
-            {"مشاهده در تلگرام"}
-            <ExternalLinkIcon className="w-3.5 h-3.5" />
-          </a>
-        ) : (
-          <div className="flex-1 bg-kalako-slate-200 text-kalako-slate-400 text-[13px] font-medium py-2.5 rounded-xl text-center">
-            {"لینک موجود نیست"}
-          </div>
-        )}
+        <button
+          onClick={() => !inCart && addToCart(product)}
+          disabled={inCart}
+          className={`flex-1 text-[13px] font-medium py-2.5 rounded-xl transition-colors duration-200 text-center flex items-center justify-center gap-1.5 ${
+            inCart
+              ? "bg-green-100 text-green-700 cursor-default"
+              : "bg-kalako-navy text-white hover:bg-kalako-navy-light"
+          }`}
+        >
+          {inCart ? ("در سبد خرید") : ("افزودن به سبد")}
+          <CartPlusIcon className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );
