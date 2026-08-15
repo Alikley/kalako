@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { KalakoLogo } from "./KalakoLogo";
 import { useStore, CATEGORIES, BRANDS } from "@/hook/useStore";
 import { HeartIcon, CartIcon, UserIcon } from "./navbar/NavbarIcons";
@@ -10,6 +11,7 @@ import { NavDropdown, DropItem } from "./navbar/NavDropdown";
 import { MobileMenu } from "./navbar/MobileMenu";
 
 export function Navbar() {
+  const { data: session } = useSession();
   const pathname = usePathname();
   const likes = useStore((s) => s.likes);
   const cart = useStore((s) => s.cart);
@@ -91,12 +93,27 @@ export function Navbar() {
               </span>
             )}
           </Link>
-          <Link
-            href="/login"
-            className="hidden md:flex items-center gap-2 bg-kalako-navy text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-kalako-navy-light transition-colors"
-          >
-            <UserIcon /> {"ورود / ثبت‌نام"}
-          </Link>
+          {session ? (
+            <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-kalako-slate-100 px-4 py-2.5 rounded-full">
+                <UserIcon />
+                <span className="text-sm font-medium text-kalako-navy">{session.user?.name}</span>
+              </div>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="bg-kalako-red text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
+              >
+                {"خروج"}
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden md:flex items-center gap-2 bg-kalako-navy text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-kalako-navy-light transition-colors"
+            >
+              <UserIcon /> {"ورود / ثبت‌نام"}
+            </Link>
+          )}
           <MobileMenu />
         </div>
       </div>

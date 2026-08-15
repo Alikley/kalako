@@ -18,11 +18,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body className="antialiased bg-kalako-cream text-kalako-navy">
-        <SessionProvider>
-          <Navbar />
-          {children}
-          <Footer />
-        </SessionProvider>
+      <SessionProvider>
+        <Navbar />
+        {children}
+        <Footer />
+      </SessionProvider>
       </body>
     </html>
   );

@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { KalakoLogo } from "../KalakoLogo";
 import { useStore, CATEGORIES, BRANDS } from "@/hook/useStore";
 import { CartIcon, HeartIcon, UserIcon } from "./NavbarIcons";
 import { DropItem } from "./NavDropdown";
 
 export function MobileMenu() {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const likes = useStore((s) => s.likes);
   const cart = useStore((s) => s.cart);
@@ -88,6 +90,14 @@ export function MobileMenu() {
             {"درباره ما"}
           </DropItem>
         </nav>
+        {session && (
+          <div className="absolute bottom-20 left-0 right-0 px-4">
+            <div className="flex items-center gap-2 px-3 py-2 bg-kalako-orange/10 rounded-xl">
+              <UserIcon />
+              <span className="text-sm font-medium text-kalako-navy">{session.user?.name}</span>
+            </div>
+          </div>
+        )}
         <div className="absolute bottom-0 left-0 right-0 p-4 flex gap-2">
           <Link
             href="/cart"
@@ -103,13 +113,22 @@ export function MobileMenu() {
           >
             <HeartIcon /> {likes.length}
           </Link>
-          <Link
-            href="/login"
-            onClick={() => setOpen(false)}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-kalako-navy text-white text-sm font-medium"
-          >
-            <UserIcon /> {"ورود"}
-          </Link>
+          {session ? (
+            <button
+              onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-kalako-red text-white text-sm font-medium"
+            >
+              <UserIcon /> {"خروج"}
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setOpen(false)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-kalako-navy text-white text-sm font-medium"
+            >
+              <UserIcon /> {"ورود"}
+            </Link>
+          )}
         </div>
       </div>
     </>
