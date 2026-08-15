@@ -31,6 +31,10 @@ export const authOptions: NextAuthOptions = {
           id: String(user.id),
           name: user.name,
           email: user.email,
+          lastName: user.lastName,
+          phone: user.phone,
+          address: user.address,
+          postalCode: user.postalCode,
         };
       },
     }),
@@ -40,15 +44,18 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 روز
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, user }) {
-      // اولین ورود — user هست
       if (user) {
         token.userId = Number(user.id);
         token.name = user.name;
         token.email = user.email;
+        token.lastName = (user as any).lastName;
+        token.phone = (user as any).phone;
+        token.address = (user as any).address;
+        token.postalCode = (user as any).postalCode;
       }
       return token;
     },
@@ -57,6 +64,10 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).userId = token.userId;
         session.user.name = token.name;
         session.user.email = token.email;
+        (session.user as any).lastName = token.lastName;
+        (session.user as any).phone = token.phone;
+        (session.user as any).address = token.address;
+        (session.user as any).postalCode = token.postalCode;
       }
       return session;
     },

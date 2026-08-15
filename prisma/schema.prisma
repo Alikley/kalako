@@ -1,7 +1,3 @@
-// ============================================
-// Kalako Site v1.0.0.7.14 — Prisma Schema (MySQL)
-// ============================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,51 +7,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── کاربران ─────────────────────────────────
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String   // bcrypt hashed — قابل ردیابی نیست
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  likes     Like[]
-  cartItems CartItem[]
-
-  @@map("users")
+  id         Int      @id @default(autoincrement())
+  name       String
+  lastName   String?  @default("")
+  email      String   @unique
+  phone      String?  @default("")
+  address    String?  @default("")
+  postalCode String?  @default("")
+  password   String
+  likes      Like[]
+  cartItems  CartItem[]
+  createdAt  DateTime @default(now())
 }
 
-// ── لایک‌ها ──────────────────────────────────
 model Like {
-  id        Int      @id @default(autoincrement())
+  id        Int  @id @default(autoincrement())
   userId    Int
-  productId String   // فرمت: "channelId_postId"
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId Int
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId], name: "uniq_user_product")
-  @@index([userId], map: "idx_like_userId")
-  @@map("likes")
 }
 
-// ── سبد خرید ────────────────────────────────
 model CartItem {
-  id        Int      @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   userId    Int
-  productId String   // فرمت: "channelId_postId"
+  productId Int
   title     String
-  price     Int?             // قیمت عددی (تومان)
-  oldPrice  Int?             // قیمت قبلی
+  price     String
+  oldPrice  String?
   image     String
-  channel   String   // اسم کانال
+  channel   String
   link      String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId], name: "uniq_user_cart_product")
-  @@index([userId], map: "idx_cart_userId")
-  @@map("cart_items")
 }

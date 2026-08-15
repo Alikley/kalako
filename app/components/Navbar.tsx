@@ -3,11 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { KalakoLogo } from "./KalakoLogo";
 import { useStore, CATEGORIES, BRANDS } from "@/hook/useStore";
 import { HeartIcon, CartIcon, UserIcon } from "./navbar/NavbarIcons";
 import { NavDropdown, DropItem } from "./navbar/NavDropdown";
+import { UserDropdown } from "./navbar/UserDropdown";
 import { MobileMenu } from "./navbar/MobileMenu";
 
 export function Navbar() {
@@ -94,17 +95,8 @@ export function Navbar() {
             )}
           </Link>
           {session ? (
-            <div className="hidden md:flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-kalako-slate-100 px-4 py-2.5 rounded-full">
-                <UserIcon />
-                <span className="text-sm font-medium text-kalako-navy">{session.user?.name}</span>
-              </div>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="bg-kalako-red text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
-              >
-                {"خروج"}
-              </button>
+            <div className="hidden md:block">
+              <UserDropdown userName={session.user?.name || ""} />
             </div>
           ) : (
             <Link
