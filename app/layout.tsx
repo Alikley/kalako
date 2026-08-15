@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
+import { SessionProvider } from "./components/SessionProvider";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -17,9 +18,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body className="antialiased bg-kalako-cream text-kalako-navy">
-        <Navbar />
-        {children}
-        <Footer />
+        <SessionProvider>
+          <Navbar />
+          {children}
+          <Footer />
+        </SessionProvider>
       </body>
     </html>
   );

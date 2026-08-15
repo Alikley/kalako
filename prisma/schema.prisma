@@ -1,0 +1,61 @@
+// ============================================
+// Kalako Site v1.0.0.7.14 — Prisma Schema (MySQL)
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ── کاربران ─────────────────────────────────
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String   // bcrypt hashed — قابل ردیابی نیست
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  likes     Like[]
+  cartItems CartItem[]
+
+  @@map("users")
+}
+
+// ── لایک‌ها ──────────────────────────────────
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId String   // فرمت: "channelId_postId"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId], name: "uniq_user_product")
+  @@index([userId], map: "idx_like_userId")
+  @@map("likes")
+}
+
+// ── سبد خرید ────────────────────────────────
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId String   // فرمت: "channelId_postId"
+  title     String
+  price     Int?             // قیمت عددی (تومان)
+  oldPrice  Int?             // قیمت قبلی
+  image     String
+  channel   String   // اسم کانال
+  link      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId], name: "uniq_user_cart_product")
+  @@index([userId], map: "idx_cart_userId")
+  @@map("cart_items")
+}

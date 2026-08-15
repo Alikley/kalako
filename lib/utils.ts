@@ -1,5 +1,11 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+// Fallback for environments without the `tailwind-merge` package.
+// This basic implementation returns the input string unchanged.
+// If `tailwind-merge` is available in the environment, replace this
+// with: import { twMerge } from "tailwind-merge";
+function twMerge(input: string) {
+  return input;
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

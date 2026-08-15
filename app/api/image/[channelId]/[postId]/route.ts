@@ -4,13 +4,13 @@ const BOT_URL = process.env.BOT_API_URL || "http://localhost:3001";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ channelId: string; postId: string }> }
+  { params }: { params: { channelId: string; postId: string } }
 ) {
   try {
-    const { channelId, postId } = await params;
+    const { channelId, postId } = params;
     const url = `${BOT_URL}/api/image/${channelId}/${postId}`;
     const res = await fetch(url, {
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(30000), // v4.10: 30s timeout for images
     });
 
     if (!res.ok) {
