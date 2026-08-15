@@ -18,7 +18,10 @@ interface ProfileFormData {
 export function ProfileForm() {
   const { data: session, update: updateSession } = useSession();
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const {
     register,
@@ -54,7 +57,10 @@ export function ProfileForm() {
       const result = await res.json();
 
       if (res.ok) {
-        setStatus({ type: "success", message: result.message || "اطلاعات با موفقیت ذخیره شد" });
+        setStatus({
+          type: "success",
+          message: result.message || "اطلاعات با موفقیت ذخیره شد",
+        });
         await updateSession({
           name: data.name,
           lastName: data.lastName,
@@ -63,7 +69,10 @@ export function ProfileForm() {
           postalCode: data.postalCode,
         });
       } else {
-        setStatus({ type: "error", message: result.error || "خطا در ذخیره اطلاعات" });
+        setStatus({
+          type: "error",
+          message: result.error || "خطا در ذخیره اطلاعات",
+        });
       }
     } catch {
       setStatus({ type: "error", message: "خطا در ارتباط با سرور" });
@@ -132,7 +141,7 @@ export function ProfileForm() {
         disabled={loading}
         className="w-full py-3 rounded-xl bg-kalako-navy text-white text-sm font-medium hover:bg-kalako-navy-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
-        {loading ? ("در حال ذخیره...") : ("ثبت")}
+        {loading ? "در حال ذخیره..." : "ثبت"}
       </button>
     </form>
   );

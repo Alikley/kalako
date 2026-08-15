@@ -3,7 +3,7 @@
 import React from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ProfileForm } from "./components/ProfileForm";
+import { ProfileForm } from "../components/edit/ProfileForm";
 
 export default function EditPage() {
   const { data: session, status: authStatus } = useSession();
@@ -26,8 +26,12 @@ export default function EditPage() {
     <div className="min-h-screen bg-kalako-cream py-12 px-4">
       <div className="mx-auto max-w-lg">
         <div className="bg-white rounded-2xl shadow-sm border border-kalako-slate-200/60 p-6 sm:p-8">
-          <h1 className="text-xl font-bold text-kalako-navy mb-1">{"ویرایش پروفایل"}</h1>
-          <p className="text-sm text-kalako-slate-500 mb-6">{"اطلاعات خود را ویرایش کنید"}</p>
+          <h1 className="text-xl font-bold text-kalako-navy mb-1">
+            {"ویرایش پروفایل"}
+          </h1>
+          <p className="text-sm text-kalako-slate-500 mb-6">
+            {"اطلاعات خود را ویرایش کنید"}
+          </p>
           <ProfileForm />
         </div>
       </div>
