@@ -15,18 +15,28 @@ export interface BotMeta {
   source?: string;
 }
 
+const PRODUCTS_PER_PAGE = 20;
+
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<BotMeta | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (p?: number) => {
+    const targetPage = p ?? page;
     setLoading(true);
     setError(null);
     setMeta(null);
     try {
-      const res = await fetch("/api/products");
+      const params = new URLSearchParams();
+      params.set("page", String(targetPage));
+      params.set("limit", String(PRODUCTS_PER_PAGE));
+
+      const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const mapped: Product[] = (data.products || []).map((p: any) => ({
@@ -48,6 +58,9 @@ export function useProducts() {
         link: p.link || "",
       }));
       setProducts(mapped);
+      setPage(data.page || 1);
+      setTotalPages(data.totalPages || 1);
+      setTotal(data.total || 0);
 
       // v5.12: Store metadata for better UX
       if (data._meta) {
@@ -61,11 +74,16 @@ export function useProducts() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  return { products, loading, error, meta, refetch: fetchProducts };
+  const goToPage = useCallback((p: number) => {
+    if (p < 1 || p > totalPages) return;
+    fetchProducts(p);
+  }, [totalPages, fetchProducts]);
+
+  return { products, loading, error, meta, page, totalPages, total, setPage: goToPage, refetch: fetchProducts };
 }

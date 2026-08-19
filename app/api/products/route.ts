@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 
 const BOT_URL = process.env.BOT_API_URL || "http://localhost:3001";
+const DEFAULT_PAGE_SIZE = 20;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const cat = searchParams.get("cat");
   const brand = searchParams.get("brand");
   const discount = searchParams.get("discount");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE));
 
   try {
-    const res = await fetch(`${BOT_URL}/api/products`, {
+    // به ربات میگیم همه محصولات رو بفرسته (حداکثر ۵۰۰ تا)
+    const res = await fetch(`${BOT_URL}/api/products?limit=500`, {
       cache: "no-store",
       signal: AbortSignal.timeout(60000),
     });
@@ -28,9 +32,18 @@ export async function GET(req: Request) {
           p.channelTitle?.includes(brand) || p.channelId?.includes(brand)
       );
 
+    const total = results.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const safePage = Math.min(page, totalPages);
+    const offset = (safePage - 1) * limit;
+    const paginatedResults = results.slice(offset, offset + limit);
+
     return NextResponse.json({
-      products: results,
-      total: results.length,
+      products: paginatedResults,
+      total,
+      page: safePage,
+      totalPages,
+      pageSize: limit,
       _meta: {
         cached: data.cached || false,
         stale: data.stale || false,
@@ -44,6 +57,9 @@ export async function GET(req: Request) {
     return NextResponse.json({
       products: [],
       total: 0,
+      page: 1,
+      totalPages: 1,
+      pageSize: limit,
       _meta: {
         cached: false,
         connectionError: true,

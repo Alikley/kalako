@@ -7,9 +7,10 @@ import { ProductCard } from "./card/ProductCard";
 import { LoadingSkeleton } from "./card/LoadingSkeleton";
 import { BotStatusBadge } from "./card/BotStatusBadge";
 import { EmptyState } from "./card/EmptyState";
+import { Pagination } from "./Pagination";
 
 export function ProductCards() {
-  const { products, loading, error, meta, refetch } = useProducts();
+  const { products, loading, error, meta, page, totalPages, total, setPage, refetch } = useProducts();
   const {
     products: searchResults,
     loading: searchLoading,
@@ -20,6 +21,14 @@ export function ProductCards() {
     search,
     reset,
   } = useSearchProducts();
+
+  /** اسکرول به بالای لیست محصولات هنگام تغییر صفحه */
+  const gridRef = React.useRef<HTMLDivElement>(null);
+
+  const handlePageChange = React.useCallback((p: number) => {
+    setPage(p);
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [setPage]);
 
   React.useEffect(() => {
     const handler = (e: any) => {
@@ -134,12 +143,19 @@ export function ProductCards() {
 
   return (
     <div className="flex-1 min-w-0">
+      <div ref={gridRef} />
       <BotStatusBadge meta={meta} />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {products.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}
       </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }
