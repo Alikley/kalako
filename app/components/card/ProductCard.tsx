@@ -21,9 +21,10 @@ export function ProductCard({ product }: { product: Product }) {
     }
   }
 
-  const telegramChannelUrl = product.channel
-    ? `https://t.me/${product.channel.replace(/@/g, "")}`
-    : null;
+  // v1.0.0.5: لینک پست تلگرام (product.link) > لینک کانال (fallback)
+  const telegramPostUrl = product.link || (product.channelId
+    ? `https://t.me/${product.channelId}`
+    : null);
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)] transition-shadow duration-300 group">
@@ -86,9 +87,9 @@ export function ProductCard({ product }: { product: Product }) {
 
         <div className="flex items-center gap-1.5 bg-kalako-slate-100 rounded-lg px-2.5 py-1.5 self-start">
           <ChannelIcon className="w-3.5 h-3.5 text-kalako-slate-400" />
-          {telegramChannelUrl ? (
+          {telegramPostUrl ? (
             <a
-              href={telegramChannelUrl}
+              href={telegramPostUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[11px] text-kalako-slate-500 font-medium hover:text-kalako-orange transition-colors"
@@ -124,7 +125,7 @@ export function ProductCard({ product }: { product: Product }) {
 
         <button
           onClick={() => addToCart(product)}
-          className="w-full bg-kalako-navy text-white text-[13px] font-medium py-2.5 rounded-xl hover:bg-kalako-navy-light transition-colors duration-200"
+          className="flex-1 bg-kalako-orange text-white text-[13px] font-medium py-2.5 rounded-xl hover:bg-kalako-orange-hover transition-colors duration-200 text-center"
         >
           {"افزودن به سبد خرید"}
         </button>

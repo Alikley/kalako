@@ -1,15 +1,37 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { Product } from "./useStore";
 
+const SEARCH_PAGE_SIZE = 20;
+
 export function useSearchProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allResults, setAllResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchPage, setSearchPage] = useState(1);
+
+  const searchTotalPages = useMemo(
+    () => Math.max(1, Math.ceil(allResults.length / SEARCH_PAGE_SIZE)),
+    [allResults.length]
+  );
+
+  const products = useMemo(
+    () => {
+      const start = (searchPage - 1) * SEARCH_PAGE_SIZE;
+      return allResults.slice(start, start + SEARCH_PAGE_SIZE);
+    },
+    [allResults, searchPage]
+  );
+
+  const searchTotal = allResults.length;
+
+  const goToSearchPage = useCallback((p: number) => {
+    if (p >= 1 && p <= searchTotalPages) setSearchPage(p);
+  }, [searchTotalPages]);
 
   const search = useCallback(async (query: string) => {
     if (!query || query.trim().length < 2) return;
@@ -18,6 +40,7 @@ export function useSearchProducts() {
     setHint(null);
     setSearchMode(true);
     setSearchQuery(query);
+    setSearchPage(1);
     try {
       const res = await fetch("/api/search", {
         method: "POST",
@@ -26,11 +49,10 @@ export function useSearchProducts() {
       });
       const data = await res.json();
 
-      // v5.12: Handle error info from bot
       if (data.error && (!data.products || data.products.length === 0)) {
         setError(data.error);
         setHint(data.hint || null);
-        setProducts([]);
+        setAllResults([]);
       } else {
         const mapped: Product[] = (data.products || []).map((p: any) => ({
           id: String(p.id),
@@ -50,7 +72,7 @@ export function useSearchProducts() {
           views: p.views || 0,
           link: p.link || "",
         }));
-        setProducts(mapped);
+        setAllResults(mapped);
       }
     } catch (e: any) {
       setError(e.message || "خطا در جستجو");
@@ -60,12 +82,27 @@ export function useSearchProducts() {
   }, []);
 
   const reset = useCallback(() => {
-    setProducts([]);
+    setAllResults([]);
     setSearchMode(false);
     setSearchQuery("");
+    setSearchPage(1);
     setError(null);
     setHint(null);
   }, []);
 
-  return { products, loading, error, hint, searchMode, searchQuery, search, reset };
+  return {
+    products,
+    allResults,
+    loading,
+    error,
+    hint,
+    searchMode,
+    searchQuery,
+    search,
+    reset,
+    searchPage,
+    searchTotalPages,
+    searchTotal,
+    goToSearchPage,
+  };
 }

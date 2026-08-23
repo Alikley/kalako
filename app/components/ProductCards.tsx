@@ -20,15 +20,23 @@ export function ProductCards() {
     searchQuery,
     search,
     reset,
+    searchPage,
+    searchTotalPages,
+    searchTotal,
+    goToSearchPage,
   } = useSearchProducts();
 
-  /** اسکرول به بالای لیست محصولات هنگام تغییر صفحه */
   const gridRef = React.useRef<HTMLDivElement>(null);
 
   const handlePageChange = React.useCallback((p: number) => {
     setPage(p);
     gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [setPage]);
+
+  const handleSearchPageChange = React.useCallback((p: number) => {
+    goToSearchPage(p);
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [goToSearchPage]);
 
   React.useEffect(() => {
     const handler = (e: any) => {
@@ -74,7 +82,7 @@ export function ProductCards() {
         <EmptyState
           icon="search"
           title={`نتیجه‌ای برای «${searchQuery}» پیدا نشد`}
-          subtitle="جستجو در کانال‌های تلگرام انجام شد ولی محصولی یافت نشد"
+          subtitle="جستجوی مستقیم تلگرام انجام شد ولی محصولی یافت نشد"
           actions={
             <button
               onClick={reset}
@@ -88,11 +96,18 @@ export function ProductCards() {
     }
     return (
       <div className="flex-1 min-w-0">
+        <div ref={gridRef} />
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {searchResults.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
+        <Pagination
+          page={searchPage}
+          totalPages={searchTotalPages}
+          total={searchTotal}
+          onPageChange={handleSearchPageChange}
+        />
       </div>
     );
   }

@@ -9,26 +9,26 @@ export async function POST(req: Request) {
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json(
-        { products: [], total: 0, error: "عبارت جستجو خیلی کوتاه است (حداقل ۲ حرف)" },
+        { products: [], total: 0, error: "\u0639\u0628\u0627\u0631\u062a \u062c\u0633\u062a\u062c\u0648 \u062e\u06cc\u0644\u06cc \u06a9\u0648\u062a\u0627\u0647 \u0627\u0633\u062a (\u062d\u062f\u0627\u0642\u0644 \u06f2 \u062d\u0631\u0641)" },
         { status: 400 }
       );
     }
 
+    // v1.0.0.3: source="web" → سرچ مستقل تلگرام (وابسته به DB نیست، ۵۰ محصول)
     const res = await fetch(`${BOT_URL}/api/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, gender, priceMin, priceMax }),
-      signal: AbortSignal.timeout(60000), // v4.10: 60s timeout
+      body: JSON.stringify({ query, gender, priceMin, priceMax, source: "web" }),
+      signal: AbortSignal.timeout(60000),
     });
 
     const data = await res.json();
 
-    // v4.10: Pass through error info from bot
     if (!res.ok) {
       return NextResponse.json({
         products: data.products || [],
         total: 0,
-        error: data.error || `خطای سرور ربات (${res.status})`,
+        error: data.error || `\u062e\u0637\u0627\u06cc \u0633\u0631\u0648\u0631 \u0631\u0628\u0627\u062a (${res.status})`,
         hint: data.hint || null,
       }, { status: res.status });
     }
@@ -38,8 +38,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       products: [],
       total: 0,
-      error: e.message || "خطا در ارتباط با ربات",
-      hint: "ربات روی پورت 3001 در دسترس نیست",
+      error: e.message || "\u062e\u0637\u0627 \u062f\u0631 \u0627\u0631\u062a\u0628\u0627\u0637 \u0628\u0627 \u0631\u0628\u0627\u062a",
+      hint: "\u0631\u0628\u0627\u062a \u0631\u0648\u06cc \u067e\u0648\u0631\u062a 3001 \u062f\u0631 \u062f\u0633\u062a\u0631\u0633 \u0646\u06cc\u0633\u062a",
     }, { status: 500 });
   }
 }
