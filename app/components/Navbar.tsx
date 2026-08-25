@@ -11,6 +11,16 @@ import { NavDropdown, DropItem } from "./navbar/NavDropdown";
 import { UserDropdown } from "./navbar/UserDropdown";
 import { MobileMenu } from "./navbar/MobileMenu";
 
+/**
+ * v1.0.0.7: کلیک روی لوگو → رفرش کامل صفحه و بازگشت به صفحه اول
+ * چون سرچ state کلاینت‌سایده، Link معمولی Next.js صفحه رو ریست نمی‌کنه؛
+ * برای همین ناوبری کامل (hard navigation) انجام می‌دیم تا همه‌چیز از صفر لود بشه.
+ */
+function handleLogoClick(e: React.MouseEvent<HTMLAnchorElement>) {
+  e.preventDefault();
+  window.location.href = "/";
+}
+
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -20,9 +30,15 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full bg-kalako-cream/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/">
+        <a
+          href="/"
+          onClick={handleLogoClick}
+          aria-label="کالاکو — بازگشت به صفحه اصلی (رفرش صفحه)"
+          title="بازگشت به صفحه اصلی"
+          className="cursor-pointer"
+        >
           <KalakoLogo className="shrink-0" />
-        </Link>
+        </a>
 
         <nav className="hidden md:flex items-center gap-6">
           <Link

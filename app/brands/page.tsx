@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { BRANDS } from "@/hook/useStore";
 import type { Product } from "@/hook/useStore";
 import { formatPrice } from "@/lib/utils";
+import { useDocumentTitle } from "@/hook/useDocumentTitle";
 
 function BrandProducts({ brand }: { brand: string }) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -62,6 +63,9 @@ function BrandProducts({ brand }: { brand: string }) {
 function BrandsContent() {
   const params = useSearchParams();
   const brand = params.get("b");
+
+  // v1.0.0.7: عنوان داینامیک تب مرورگر
+  useDocumentTitle(brand ? `برند ${brand} | کالاکو` : "برندها | کالاکو");
 
   return (
     <div className="min-h-screen bg-white">

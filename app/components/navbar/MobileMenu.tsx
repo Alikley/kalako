@@ -44,7 +44,19 @@ export function MobileMenu() {
         className={`fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-2xl transition-transform md:hidden ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-4 py-4">
-          <KalakoLogo />
+          {/* v1.0.0.7: کلیک روی لوگو → رفرش کامل و بازگشت به صفحه اول */}
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              setOpen(false);
+              window.location.href = "/";
+            }}
+            aria-label="کالاکو — بازگشت به صفحه اصلی (رفرش صفحه)"
+            className="cursor-pointer"
+          >
+            <KalakoLogo />
+          </a>
           <button
             onClick={() => setOpen(false)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-kalako-slate-500 hover:text-kalako-navy"

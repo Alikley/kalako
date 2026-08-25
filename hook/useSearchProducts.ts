@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import type { Product } from "./useStore";
+import { useDocumentTitle } from "./useDocumentTitle";
 
 const SEARCH_PAGE_SIZE = 20;
 
@@ -28,6 +29,31 @@ export function useSearchProducts() {
   );
 
   const searchTotal = allResults.length;
+
+  /**
+   * v1.0.0.7: عنوان داینامیک تب مرورگر بر اساس وضعیت جستجو
+   *  - در حال سرچ:  «در حال جستجوی "X" | کالاکو»
+   *  - با نتیجه:    «جستجوی "X" — N نتیجه | کالاکو»
+   *  - بدون نتیجه:  «جستجوی "X" — نتیجه‌ای نبود | کالاکو»
+   *  - حالت دیفالت: «کالاکو» (وقتی سرچی در جریان نیست)
+   */
+  const searchTitle = useMemo(() => {
+    if (!searchMode || !searchQuery) return null;
+
+    if (loading) {
+      return `در حال جستجوی «${searchQuery}» | کالاکو`;
+    }
+
+    const count = allResults.length;
+    if (count > 0) {
+      const faCount = count.toLocaleString("fa-IR");
+      return `جستجوی «${searchQuery}» — ${faCount} نتیجه | کالاکو`;
+    }
+
+    return `جستجوی «${searchQuery}» — نتیجه‌ای نبود | کالاکو`;
+  }, [searchMode, searchQuery, loading, allResults]);
+
+  useDocumentTitle(searchTitle);
 
   const goToSearchPage = useCallback((p: number) => {
     if (p >= 1 && p <= searchTotalPages) setSearchPage(p);

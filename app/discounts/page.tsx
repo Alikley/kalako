@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { CATEGORIES } from "@/hook/useStore";
 import type { Product } from "@/hook/useStore";
 import { formatPrice } from "@/lib/utils";
+import { useDocumentTitle } from "@/hook/useDocumentTitle";
 
 function DiscountProducts({ cat }: { cat: string | null }) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -70,6 +71,9 @@ function DiscountProducts({ cat }: { cat: string | null }) {
 function DiscountsContent() {
   const params = useSearchParams();
   const cat = params.get("cat");
+
+  // v1.0.0.7: عنوان داینامیک تب مرورگر
+  useDocumentTitle(cat ? `تخفیف ${cat} | کالاکو` : "تخفیف‌ها | کالاکو");
 
   return (
     <div className="min-h-screen bg-white">

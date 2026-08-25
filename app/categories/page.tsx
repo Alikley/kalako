@@ -6,6 +6,7 @@ import { CATEGORIES } from "@/hook/useStore";
 import { FilterSidebar } from "@/app/components/FilterSidebar";
 import type { Product } from "@/hook/useStore";
 import { formatPrice } from "@/lib/utils";
+import { useDocumentTitle } from "@/hook/useDocumentTitle";
 
 function CategoryProducts({ cat }: { cat: string }) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -63,6 +64,9 @@ function CategoryProducts({ cat }: { cat: string }) {
 function CategoriesContent() {
   const params = useSearchParams();
   const cat = params.get("cat");
+
+  // v1.0.0.7: عنوان داینامیک تب مرورگر
+  useDocumentTitle(cat ? `دسته‌بندی ${cat} | کالاکو` : "دسته‌بندی‌ها | کالاکو");
 
   return (
     <div className="min-h-screen bg-white">

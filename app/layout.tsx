@@ -8,10 +8,43 @@ import { SessionProvider } from "./components/SessionProvider";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
+/**
+ * v1.0.0.7: متادیتای سایت
+ *  - عنوان دیفالت: فقط اسم سایت → «کالاکو»
+ *  - عنوان داینامیک هنگام سرچ / صفحات مختلف از طریق هوک useDocumentTitle
+ *  - آیکون‌ها (favicon و apple-icon) با file convention های Next.js:
+ *    app/icon.svg + app/favicon.ico + app/apple-icon.png (لوگوی کالاکو)
+ */
 export const metadata: Metadata = {
-  title: "\u06a9\u0627\u0644\u0627\u06a9\u0648 | \u062c\u0633\u062a\u062c\u0648\u06cc \u0647\u0648\u0634\u0645\u0646\u062f \u0644\u0628\u0627\u0633",
-  description: "\u06a9\u0627\u0644\u0627\u06a9\u0648 - \u0628\u0647\u062a\u0631\u06cc\u0646 \u0642\u06cc\u0645\u062a \u0628\u0627\u0632\u0627\u0631 \u0644\u0628\u0627\u0633.",
-  icons: { icon: "/favicon.ico" },
+  title: "کالاکو",
+  description: "جستجو و مقایسه قیمت لباس از کانال‌های فروش تلگرام با هوش مصنوعی",
+  applicationName: "کالاکو",
+  keywords: [
+    "کالاکو",
+    "خرید لباس",
+    "قیمت لباس",
+    "کانال تلگرام",
+    "مقایسه قیمت",
+    "تخفیف لباس",
+    "خرید آنلاین",
+  ],
+  authors: [{ name: "کالاکو" }],
+  openGraph: {
+    title: "کالاکو",
+    description: "جستجو و مقایسه قیمت لباس از کانال‌های فروش تلگرام",
+    type: "website",
+    locale: "fa_IR",
+    siteName: "کالاکو",
+  },
+  twitter: {
+    card: "summary",
+    title: "کالاکو",
+    description: "جستجو و مقایسه قیمت لباس از کانال‌های فروش تلگرام",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

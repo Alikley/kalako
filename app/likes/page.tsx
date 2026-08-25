@@ -4,11 +4,15 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useStore, type Product } from "@/hook/useStore";
 import { formatPrice } from "@/lib/utils";
+import { useDocumentTitle } from "@/hook/useDocumentTitle";
 
 export default function LikesPage() {
   const { likes } = useStore();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // v1.0.0.7: عنوان داینامیک تب مرورگر
+  useDocumentTitle(likes.length > 0 ? `علاقه‌مندی‌ها (${likes.length}) | کالاکو` : "علاقه‌مندی‌ها | کالاکو");
 
   useEffect(() => {
     fetch("/api/products")

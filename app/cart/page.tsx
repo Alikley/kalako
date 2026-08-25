@@ -4,9 +4,13 @@ import React from "react";
 import Link from "next/link";
 import { useStore } from "@/hook/useStore";
 import { formatPrice } from "@/lib/utils";
+import { useDocumentTitle } from "@/hook/useDocumentTitle";
 
 export default function CartPage() {
   const { cart, removeFromCart, clearCart } = useStore();
+
+  // v1.0.0.7: عنوان داینامیک تب مرورگر
+  useDocumentTitle(cart.length > 0 ? `سبد خرید (${cart.length}) | کالاکو` : "سبد خرید | کالاکو");
 
   return (
     <div className="min-h-screen bg-white">
