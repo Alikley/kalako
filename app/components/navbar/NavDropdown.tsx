@@ -4,16 +4,33 @@ import React from "react";
 import Link from "next/link";
 import { ChevronDown } from "./NavbarIcons";
 
+/**
+ * v1.0.1.0: DropItem حالا prop `onClick` هم قبول می‌کنه
+ * - اگه onClick داده بشه، به‌جای Link از button استفاده می‌شه
+ * - این برای دسته/برندهای نوبار استفاده می‌شه که مثل سرچ عمل کنن
+ */
 export function DropItem({
   href,
+  onClick,
   children,
 }: {
-  href: string;
+  href?: string;
+  onClick?: () => void;
   children: React.ReactNode;
 }) {
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="block w-full text-right px-4 py-2 text-sm text-kalako-slate-600 hover:text-kalako-navy hover:bg-kalako-slate-100 rounded-lg transition-colors"
+      >
+        {children}
+      </button>
+    );
+  }
   return (
     <Link
-      href={href}
+      href={href || "#"}
       className="block px-4 py-2 text-sm text-kalako-slate-600 hover:text-kalako-navy hover:bg-kalako-slate-100 rounded-lg transition-colors"
     >
       {children}

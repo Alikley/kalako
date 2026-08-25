@@ -21,6 +21,21 @@ function handleLogoClick(e: React.MouseEvent<HTMLAnchorElement>) {
   window.location.href = "/";
 }
 
+/**
+ * v1.0.1.0: کلیک روی دسته/برند → مثل سرچ عمل کنه
+ * کاربر: «توی قسمت نوبار دوتا گزینه هست که برند ها دسته بندی ها اینارو اگه
+ *         کاربر هرکدوم گزینه رو زد میخوام شبیه سرچ عمل کنه یعنی بره بگرده
+ *         طبق چیزی که توی سرچ اعمال کردیم اینجا هم اعمال کنیم»
+ *
+ * راه‌حل: هدایت به /?q=<value> — در صفحه اصلی، ProductCards یک useEffect داره
+ * که query param `q` رو می‌خونه و سرچ رو اجرا می‌کنه.
+ * از window.location.href استفاده می‌کنیم (نه router.push) تا hard navigation
+ * باشه و state فیلتر/سرچ قبلی ریست بشه.
+ */
+function searchLikeNav(value: string) {
+  window.location.href = "/?q=" + encodeURIComponent(value);
+}
+
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -48,20 +63,19 @@ export function Navbar() {
             {"خانه"}
           </Link>
 
+          {/* v1.0.1.0: دسته‌بندی‌ها مثل سرچ عمل کنن (به‌جای صفحه /categories) */}
           <NavDropdown label="دسته‌بندی‌ها">
             {CATEGORIES.map((c) => (
-              <DropItem
-                key={c}
-                href={`/categories?cat=${encodeURIComponent(c)}`}
-              >
+              <DropItem key={c} onClick={() => searchLikeNav(c)}>
                 {c}
               </DropItem>
             ))}
           </NavDropdown>
 
+          {/* v1.0.1.0: برندها مثل سرچ عمل کنن (به‌جای صفحه /brands) */}
           <NavDropdown label="برندها">
             {BRANDS.map((b) => (
-              <DropItem key={b} href={`/brands?b=${encodeURIComponent(b)}`}>
+              <DropItem key={b} onClick={() => searchLikeNav(b)}>
                 {b}
               </DropItem>
             ))}

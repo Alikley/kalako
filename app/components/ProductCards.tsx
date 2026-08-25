@@ -14,6 +14,13 @@ import { BotStatusBadge } from "./card/BotStatusBadge";
 import { EmptyState } from "./card/EmptyState";
 import { Pagination } from "./Pagination";
 
+/**
+ * v1.0.1.0: تعداد محصولات در هر صفحه برای حالت فیلتر
+ * - نتایج فیلترشده معمولاً کمتر از 250 هستن، پس pagination نمایش داده نمیشه
+ * - ولی اگه بیشتر باشه، صفحه‌بندی محلی فعال میشه
+ */
+const FILTER_PAGE_SIZE = 250;
+
 /** v1.0.0.9: نوار وضعیت فیلتر — چند محصول بعد از فیلتر مانده + دکمه حذف */
 function FilterStatusBar({
   shown,
@@ -31,7 +38,7 @@ function FilterStatusBar({
         <span className="font-bold text-kalako-orange">
           {shown.toLocaleString("fa-IR")}
         </span>{" "}
-        از {total.toLocaleString("fa-IR")} محصول در این صفحه
+        از {total.toLocaleString("fa-IR")} محصول
       </p>
       <button
         onClick={onReset}
@@ -44,7 +51,8 @@ function FilterStatusBar({
 }
 
 export function ProductCards() {
-  const { products, loading, error, meta, page, totalPages, total, setPage, refetch } = useProducts();
+  const { products, loading, error, meta, page, totalPages, total, setPage, refetch,
+          allProducts, allLoading, allFetched, fetchAllForFilter, resetAllForFilter } = useProducts();
   const {
     products: searchResults,
     loading: searchLoading,
@@ -71,11 +79,38 @@ export function ProductCards() {
 
   const gridRef = React.useRef<HTMLDivElement>(null);
 
-  // v1.0.0.9: اعمال فیلتر روی محصولات صفحه فعلی (لیست عادی)
-  const filteredProducts = React.useMemo(
-    () => applyProductFilters(products, { category, gender, priceRange, colors }),
-    [products, category, gender, priceRange, colors]
+  // v1.0.1.0: صفحه‌بندی محلی برای حالت فیلتر (no-search mode)
+  const [filterPage, setFilterPage] = React.useState(1);
+
+  // v1.0.1.0: وقتی فیلتر فعال است (no-search mode)، کل محصولات رو fetch کن
+  // تا فیلتر روی همه اعمال بشه (نه فقط صفحه فعلی)
+  React.useEffect(() => {
+    if (filtering && !searchMode && !allFetched && !allLoading) {
+      fetchAllForFilter();
+    }
+    // وقتی فیلتر غیرفعال شد، state محلی ریست بشه تا دفعه بعد دوباره fetch کنه
+    if (!filtering && allFetched) {
+      resetAllForFilter();
+      setFilterPage(1);
+    }
+  }, [filtering, searchMode, allFetched, allLoading, fetchAllForFilter, resetAllForFilter]);
+
+  // v1.0.1.0: وقتی فیلتر تغییر می‌کنه، صفحه محلی ریست بشه
+  React.useEffect(() => {
+    setFilterPage(1);
+  }, [category, gender, priceRange, colors]);
+
+  // v1.0.1.0: اعمال فیلتر روی کل محصولات (حالت no-search + filtering)
+  const filteredAllProducts = React.useMemo(
+    () => applyProductFilters(allProducts, { category, gender, priceRange, colors }),
+    [allProducts, category, gender, priceRange, colors]
   );
+
+  // صفحه‌بندی محلی برای نتایج فیلترشده
+  const filterTotalPages = Math.max(1, Math.ceil(filteredAllProducts.length / FILTER_PAGE_SIZE));
+  const safeFilterPage = Math.min(filterPage, filterTotalPages);
+  const filterOffset = (safeFilterPage - 1) * FILTER_PAGE_SIZE;
+  const pagedFilteredProducts = filteredAllProducts.slice(filterOffset, filterOffset + FILTER_PAGE_SIZE);
 
   // v1.0.0.9: اعمال فیلتر روی نتایج جستجو
   const filteredSearchResults = React.useMemo(
@@ -93,6 +128,11 @@ export function ProductCards() {
     gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [goToSearchPage]);
 
+  const handleFilterPageChange = React.useCallback((p: number) => {
+    setFilterPage(p);
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   React.useEffect(() => {
     const handler = (e: any) => {
       if (e.detail?.query) {
@@ -101,6 +141,28 @@ export function ProductCards() {
     };
     window.addEventListener("kalako:search", handler);
     return () => window.removeEventListener("kalako:search", handler);
+  }, [search]);
+
+  // v1.0.1.0: خواندن query param `q` از URL و اجرای سرچ
+  // کاربر: «توی قسمت نوبار دوتا گزینه هست که برند ها دسته بندی ها اینارو اگه
+  //         کاربر هرکدوم گزینه رو زد میخوام شبیه سرچ عمل کنه»
+  // وقتی کاربر روی دسته/برند در نوبار کلیک می‌کنه، به /?q=<value> می‌ره
+  // و این useEffect آن را می‌خواند و سرچ می‌کند.
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if (q && q.trim().length >= 2) {
+      search(q.trim());
+      // پاک کردن query param از URL تا رفرش مجدد سرچ نکنه
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("q");
+        window.history.replaceState({}, "", url.toString());
+      } catch {
+        // ignore
+      }
+    }
   }, [search]);
 
   if (searchLoading) return <LoadingSkeleton />;
@@ -232,36 +294,62 @@ export function ProductCards() {
     );
   }
 
+  // v1.0.1.0: حالت no-search + filtering
+  // فیلتر روی کل محصولات (allProducts) اعمال میشه، نه فقط صفحه فعلی
+  if (filtering) {
+    if (allLoading && allProducts.length === 0) {
+      return <LoadingSkeleton />;
+    }
+    return (
+      <div className="flex-1 min-w-0">
+        <div ref={gridRef} />
+        <BotStatusBadge meta={meta} />
+        <FilterStatusBar
+          shown={filteredAllProducts.length}
+          total={allProducts.length}
+          onReset={resetFilters}
+        />
+        {filteredAllProducts.length === 0 ? (
+          <EmptyState
+            icon="filter"
+            title="با این فیلترها محصولی پیدا نشد"
+            subtitle="فیلترها را تغییر دهید یا حذف کنید"
+            actions={
+              <button
+                onClick={resetFilters}
+                className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+              >
+                {"حذف فیلترها"}
+              </button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {pagedFilteredProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
+        <Pagination
+          page={safeFilterPage}
+          totalPages={filterTotalPages}
+          total={filteredAllProducts.length}
+          onPageChange={handleFilterPageChange}
+        />
+      </div>
+    );
+  }
+
+  // حالت no-search + no-filtering (حالت عادی)
   return (
     <div className="flex-1 min-w-0">
       <div ref={gridRef} />
       <BotStatusBadge meta={meta} />
-      {filtering && <FilterStatusBar
-        shown={filteredProducts.length}
-        total={products.length}
-        onReset={resetFilters}
-      />}
-      {filteredProducts.length === 0 ? (
-        <EmptyState
-          icon="filter"
-          title="با این فیلترها محصولی پیدا نشد"
-          subtitle="فیلترها را تغییر دهید یا حذف کنید"
-          actions={
-            <button
-              onClick={resetFilters}
-              className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
-            >
-              {"حذف فیلترها"}
-            </button>
-          }
-        />
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
+      </div>
       <Pagination
         page={page}
         totalPages={totalPages}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const QUICK_TAGS = [
   "تیشرت",
@@ -12,6 +12,18 @@ const QUICK_TAGS = [
 
 export function SearchBar() {
   const [query, setQuery] = useState("");
+
+  // v1.0.1.0: خواندن query param `q` از URL و ست کردن input
+  // وقتی کاربر از نوبار روی دسته/برند کلیک می‌کنه، به /?q=<value> می‌ره
+  // و این useEffect آن را می‌خونه و input رو ست می‌کنه تا کاربر ببینه چی سرچ شده
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if (q) {
+      setQuery(q);
+    }
+  }, []);
 
   const handleSearch = () => {
     if (!query.trim()) return;

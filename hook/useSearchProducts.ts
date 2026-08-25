@@ -3,9 +3,15 @@
 import { useState, useCallback, useMemo } from "react";
 import type { Product } from "./useStore";
 import { useDocumentTitle } from "./useDocumentTitle";
-import { buildImageUrl } from "../lib/postId";
+import { mapApiProduct } from "./useProducts";
 
-const SEARCH_PAGE_SIZE = 20;
+/**
+ * v1.0.1.0: افزایش SEARCH_PAGE_SIZE از 20 به 50
+ * - نتایج سرچ وب حداکثر 50 محصول است (WEB_SEARCH_LIMIT در بات)
+ * - با 50، همه نتایج در یک صفحه قرار می‌گیرن و فیلتر روی همه اعمال میشه
+ * - pagination فقط وقتی نمایش داده میشه که نتایج بیشتر از 50 باشن (نادر)
+ */
+const SEARCH_PAGE_SIZE = 50;
 
 export function useSearchProducts() {
   const [allResults, setAllResults] = useState<Product[]>([]);
@@ -81,26 +87,7 @@ export function useSearchProducts() {
         setHint(data.hint || null);
         setAllResults([]);
       } else {
-        const mapped: Product[] = (data.products || []).map((p: any) => ({
-          id: String(p.id),
-          title: p.title || "محصول",
-          price: p.price != null ? Number(p.price) : null,
-          oldPrice: p.oldPrice != null ? Number(p.oldPrice) : null,
-          discount:
-            p.oldPrice && p.price
-              ? Math.round((1 - Number(p.price) / Number(p.oldPrice)) * 100) + "%"
-              : null,
-          badge: p.score && p.score > 0.8 ? "پیشنهاد" : null,
-          shipping: "ارسال از تلگرام",
-          channel: p.channelTitle || p.channelId || "",
-          channelId: p.channelId || "",
-          image: buildImageUrl(p.imageUrl, p.id, p.channelId),
-          clothingType: p.clothingType || "",
-          gender: p.gender || "",
-          date: p.date || "",
-          views: p.views || 0,
-          link: p.link || "",
-        }));
+        const mapped: Product[] = (data.products || []).map(mapApiProduct);
         setAllResults(mapped);
       }
     } catch (e: any) {

@@ -16,7 +16,13 @@ export interface BotMeta {
   source?: string;
 }
 
-const PRODUCTS_PER_PAGE = 20;
+/**
+ * v1.0.1.0: افزایش PRODUCTS_PER_PAGE از 20 به 250
+ * کاربر: «میخوام تعداد محصولات رو زیاد کنیم بکنیم دویصد پنجاه تا که نشون میده صفحه اصلی»
+ * - با 250 محصول در یک صفحه، صفحه‌بندی فقط وقتی نمایش داده میشه که DB بیشتر از 250 داشته باشه
+ * - وقتی فیلتر فعال باشه، ProductCards کل محصولات رو fetch می‌کنه و روی همه فیلتر می‌زنه
+ */
+const PRODUCTS_PER_PAGE = 250;
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -26,6 +32,12 @@ export function useProducts() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // v1.0.1.0: state برای حالت فیلتر — وقتی فیلتر فعال است،
+  // کل محصولات (نه فقط صفحه فعلی) fetch می‌شن تا فیلتر روی همه اعمال بشه
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allLoading, setAllLoading] = useState(false);
+  const [allFetched, setAllFetched] = useState(false);
 
   const fetchProducts = useCallback(async (p?: number) => {
     const targetPage = p ?? page;
@@ -40,26 +52,7 @@ export function useProducts() {
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const mapped: Product[] = (data.products || []).map((p: any) => ({
-        id: String(p.id),
-        title: p.title || "محصول",
-        price: p.price != null ? Number(p.price) : null,
-        oldPrice: p.oldPrice != null ? Number(p.oldPrice) : null,
-        discount:
-          p.oldPrice && p.price
-            ? Math.round((1 - Number(p.price) / Number(p.oldPrice)) * 100) + "%"
-            : null,
-        badge: p.score && p.score > 0.8 ? "پیشنهاد" : null,
-        shipping: "ارسال از تلگرام",
-        channel: p.channelTitle || p.channelId || "",
-        channelId: p.channelId || "",
-        image: buildImageUrl(p.imageUrl, p.id, p.channelId),
-        clothingType: p.clothingType || "",
-        gender: p.gender || "",
-        date: p.date || "",
-        views: p.views || 0,
-        link: p.link || "",
-      }));
+      const mapped: Product[] = (data.products || []).map(mapApiProduct);
       setProducts(mapped);
       setPage(data.page || 1);
       setTotalPages(data.totalPages || 1);
@@ -88,5 +81,87 @@ export function useProducts() {
     fetchProducts(p);
   }, [totalPages, fetchProducts]);
 
-  return { products, loading, error, meta, page, totalPages, total, setPage: goToPage, refetch: fetchProducts };
+  /**
+   * v1.0.1.0: fetch همه محصولات برای حالت فیلتر
+   *
+   * کاربر: «وقتی فیلتر میکنم محصولات رو بعد پجینشین هم ولی با توجه به اینکه کلا
+   *         دوتا محصول رو نشون میده اینو درست کن»
+   *
+   * مشکل: فیلتر قبلاً فقط روی صفحه فعلی (۲۵۰ محصول) اعمال می‌شد. اگه فیلتر
+   * مثلاً فقط ۲ محصول مطابقت داشت، pagination بی‌معنی می‌شد و فقط ۲ محصول
+   * نشون داده می‌شد.
+   *
+   * راه‌حل: وقتی فیلتر فعال است، کل محصولات (limit=500) رو fetch می‌کنیم
+   * و فیلتر رو روی همه اعمال می‌کنیم. سپس صفحه‌بندی محلی روی نتایج فیلترشده.
+   */
+  const fetchAllForFilter = useCallback(async () => {
+    if (allFetched || allLoading) return;
+    setAllLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "500");
+      const res = await fetch(`/api/products?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const mapped: Product[] = (data.products || []).map(mapApiProduct);
+      setAllProducts(mapped);
+      setAllFetched(true);
+    } catch (e: any) {
+      // در صورت خطا، state فعلی نگه داشته میشه
+      console.error("fetchAllForFilter error:", e.message);
+    } finally {
+      setAllLoading(false);
+    }
+  }, [allFetched, allLoading]);
+
+  const resetAllForFilter = useCallback(() => {
+    setAllFetched(false);
+    setAllProducts([]);
+  }, []);
+
+  return {
+    products,
+    loading,
+    error,
+    meta,
+    page,
+    totalPages,
+    total,
+    setPage: goToPage,
+    refetch: fetchProducts,
+    // v1.0.1.0: state و تابع برای حالت فیلتر
+    allProducts,
+    allLoading,
+    allFetched,
+    fetchAllForFilter,
+    resetAllForFilter,
+  };
+}
+
+/**
+ * v1.0.1.0: تابع mapping مشترک — هم در fetchProducts و هم در fetchAllForFilter
+ * و هم در useSearchProducts استفاده میشه (ولی فعلاً فقط در این فایل).
+ */
+export function mapApiProduct(p: any): Product {
+  return {
+    id: String(p.id),
+    title: p.title || "محصول",
+    price: p.price != null ? Number(p.price) : null,
+    oldPrice: p.oldPrice != null ? Number(p.oldPrice) : null,
+    discount:
+      p.oldPrice && p.price
+        ? Math.round((1 - Number(p.price) / Number(p.oldPrice)) * 100) + "%"
+        : null,
+    badge: p.score && p.score > 0.8 ? "پیشنهاد" : null,
+    shipping: "ارسال از تلگرام",
+    channel: p.channelTitle || p.channelId || "",
+    channelId: p.channelId || "",
+    image: buildImageUrl(p.imageUrl, p.id, p.channelId),
+    clothingType: p.clothingType || "",
+    gender: p.gender || "",
+    date: p.date || "",
+    views: p.views || 0,
+    link: p.link || "",
+  };
 }

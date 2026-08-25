@@ -8,6 +8,15 @@ import { useStore, CATEGORIES, BRANDS } from "@/hook/useStore";
 import { CartIcon, HeartIcon, UserIcon } from "./NavbarIcons";
 import { DropItem } from "./NavDropdown";
 
+/**
+ * v1.0.1.0: کلیک روی دسته/برند در منوی موبایل → مثل سرچ عمل کنه
+ * (همانند نوار دسکتاپ — به /?q=<value> هدایت می‌شه)
+ */
+function searchLikeNavMobile(value: string, closeFn: () => void) {
+  closeFn();
+  window.location.href = "/?q=" + encodeURIComponent(value);
+}
+
 export function MobileMenu() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
@@ -80,13 +89,15 @@ export function MobileMenu() {
           <DropItem href="/">
             {"خانه"}
           </DropItem>
+          {/* v1.0.1.0: دسته‌بندی‌ها مثل سرچ عمل کنن (به‌جای صفحه /categories) */}
           {CATEGORIES.map((c) => (
-            <DropItem key={c} href={`/categories?cat=${encodeURIComponent(c)}`}>
+            <DropItem key={c} onClick={() => searchLikeNavMobile(c, () => setOpen(false))}>
               {c}
             </DropItem>
           ))}
+          {/* v1.0.1.0: برندها مثل سرچ عمل کنن (به‌جای صفحه /brands) */}
           {BRANDS.slice(0, 8).map((b) => (
-            <DropItem key={b} href={`/brands?b=${encodeURIComponent(b)}`}>
+            <DropItem key={b} onClick={() => searchLikeNavMobile(b, () => setOpen(false))}>
               {b}
             </DropItem>
           ))}
