@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import type { Product } from "./useStore";
 import { useDocumentTitle } from "./useDocumentTitle";
+import { buildImageUrl } from "../lib/postId";
 
 const SEARCH_PAGE_SIZE = 20;
 
@@ -93,7 +94,7 @@ export function useSearchProducts() {
           shipping: "ارسال از تلگرام",
           channel: p.channelTitle || p.channelId || "",
           channelId: p.channelId || "",
-          image: p.imageUrl || `/api/image/${encodeURIComponent(p.channelId || "")}/${String(p.id).split("_")[1] || 0}`,
+          image: buildImageUrl(p.imageUrl, p.id, p.channelId),
           date: p.date || "",
           views: p.views || 0,
           link: p.link || "",

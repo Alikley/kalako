@@ -4,10 +4,11 @@ const BOT_URL = process.env.BOT_API_URL || "http://localhost:3001";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { channelId: string; postId: string } }
+  { params }: { params: Promise<{ channelId: string; postId: string }> }
 ) {
   try {
-    const { channelId, postId } = params;
+    // v1.0.0.8: در Next.js 15 باید params await بشه (رفع ارور sync-dynamic-apis)
+    const { channelId, postId } = await params;
     const url = `${BOT_URL}/api/image/${channelId}/${postId}`;
     const res = await fetch(url, {
       signal: AbortSignal.timeout(30000), // v4.10: 30s timeout for images
