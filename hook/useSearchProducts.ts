@@ -95,6 +95,8 @@ export function useSearchProducts() {
           channel: p.channelTitle || p.channelId || "",
           channelId: p.channelId || "",
           image: buildImageUrl(p.imageUrl, p.id, p.channelId),
+          clothingType: p.clothingType || "",
+          gender: p.gender || "",
           date: p.date || "",
           views: p.views || 0,
           link: p.link || "",

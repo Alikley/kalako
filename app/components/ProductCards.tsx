@@ -3,11 +3,45 @@
 import React from "react";
 import { useSearchProducts } from "@/hook/useSearchProducts";
 import { useProducts } from "@/hook/useProducts";
+import { useFilterStore } from "@/hook/useFilterStore";
+import {
+  applyProductFilters,
+  hasActiveFilters,
+} from "@/lib/productFilters";
 import { ProductCard } from "./card/ProductCard";
 import { LoadingSkeleton } from "./card/LoadingSkeleton";
 import { BotStatusBadge } from "./card/BotStatusBadge";
 import { EmptyState } from "./card/EmptyState";
 import { Pagination } from "./Pagination";
+
+/** v1.0.0.9: نوار وضعیت فیلتر — چند محصول بعد از فیلتر مانده + دکمه حذف */
+function FilterStatusBar({
+  shown,
+  total,
+  onReset,
+}: {
+  shown: number;
+  total: number;
+  onReset: () => void;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-kalako-orange/30 bg-amber-50 px-4 py-2.5">
+      <p className="text-[13px] font-medium text-kalako-navy">
+        نمایش{" "}
+        <span className="font-bold text-kalako-orange">
+          {shown.toLocaleString("fa-IR")}
+        </span>{" "}
+        از {total.toLocaleString("fa-IR")} محصول در این صفحه
+      </p>
+      <button
+        onClick={onReset}
+        className="text-[13px] font-bold text-kalako-orange hover:text-kalako-orange-hover transition-colors"
+      >
+        حذف فیلترها
+      </button>
+    </div>
+  );
+}
 
 export function ProductCards() {
   const { products, loading, error, meta, page, totalPages, total, setPage, refetch } = useProducts();
@@ -26,7 +60,28 @@ export function ProductCards() {
     goToSearchPage,
   } = useSearchProducts();
 
+  // v1.0.0.9: فیلترهای سایدبار از استور مشترک
+  // (selectorهای جداگانه — در zustand v5 برگرداندن آبجکت جدید از selector یکجا = loop رندر)
+  const category = useFilterStore((s) => s.category);
+  const gender = useFilterStore((s) => s.gender);
+  const priceRange = useFilterStore((s) => s.priceRange);
+  const colors = useFilterStore((s) => s.colors);
+  const resetFilters = useFilterStore((s) => s.reset);
+  const filtering = hasActiveFilters({ category, gender, priceRange, colors });
+
   const gridRef = React.useRef<HTMLDivElement>(null);
+
+  // v1.0.0.9: اعمال فیلتر روی محصولات صفحه فعلی (لیست عادی)
+  const filteredProducts = React.useMemo(
+    () => applyProductFilters(products, { category, gender, priceRange, colors }),
+    [products, category, gender, priceRange, colors]
+  );
+
+  // v1.0.0.9: اعمال فیلتر روی نتایج جستجو
+  const filteredSearchResults = React.useMemo(
+    () => applyProductFilters(searchResults, { category, gender, priceRange, colors }),
+    [searchResults, category, gender, priceRange, colors]
+  );
 
   const handlePageChange = React.useCallback((p: number) => {
     setPage(p);
@@ -55,7 +110,7 @@ export function ProductCards() {
       <EmptyState
         icon="warning"
         title={searchError}
-        subtitle={searchHint}
+        subtitle={searchHint || undefined}
         actions={
           <>
             <button
@@ -97,11 +152,32 @@ export function ProductCards() {
     return (
       <div className="flex-1 min-w-0">
         <div ref={gridRef} />
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {searchResults.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        {filtering && <FilterStatusBar
+          shown={filteredSearchResults.length}
+          total={searchResults.length}
+          onReset={resetFilters}
+        />}
+        {filteredSearchResults.length === 0 ? (
+          <EmptyState
+            icon="filter"
+            title="با این فیلترها محصولی پیدا نشد"
+            subtitle="فیلترها را تغییر دهید یا حذف کنید"
+            actions={
+              <button
+                onClick={resetFilters}
+                className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+              >
+                {"حذف فیلترها"}
+              </button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredSearchResults.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
         <Pagination
           page={searchPage}
           totalPages={searchTotalPages}
@@ -123,7 +199,7 @@ export function ProductCards() {
         meta={meta}
         actions={
           <button
-            onClick={refetch}
+            onClick={() => refetch()}
             className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
           >
             {"تلاش مجدد"}
@@ -146,7 +222,7 @@ export function ProductCards() {
         meta={meta}
         actions={
           <button
-            onClick={refetch}
+            onClick={() => refetch()}
             className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
           >
             {"تلاش مجدد"}
@@ -160,11 +236,32 @@ export function ProductCards() {
     <div className="flex-1 min-w-0">
       <div ref={gridRef} />
       <BotStatusBadge meta={meta} />
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
+      {filtering && <FilterStatusBar
+        shown={filteredProducts.length}
+        total={products.length}
+        onReset={resetFilters}
+      />}
+      {filteredProducts.length === 0 ? (
+        <EmptyState
+          icon="filter"
+          title="با این فیلترها محصولی پیدا نشد"
+          subtitle="فیلترها را تغییر دهید یا حذف کنید"
+          actions={
+            <button
+              onClick={resetFilters}
+              className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+            >
+              {"حذف فیلترها"}
+            </button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredProducts.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
       <Pagination
         page={page}
         totalPages={totalPages}

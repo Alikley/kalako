@@ -22,6 +22,10 @@ export interface Product {
   date?: string;
   views?: number;
   channelId?: string;
+  /** v1.0.0.9: نوع پوشاک از بات — برای فیلتر دسته‌بندی سایدبار */
+  clothingType?: string;
+  /** v1.0.0.9: جنسیت از بات — برای فیلتر جنسیت سایدبار */
+  gender?: string;
 }
 
 export const CATEGORIES = [

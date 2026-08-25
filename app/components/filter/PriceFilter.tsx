@@ -3,19 +3,23 @@
 import React from "react";
 import { Slider, Box } from "@mui/material";
 import { valuetext } from "./filterConstants";
+import type { PriceRange } from "@/hook/useFilterStore";
 
 interface PriceFilterProps {
-  value: number[];
-  onChange: (value: number[]) => void;
+  value: PriceRange;
+  onChange: (value: PriceRange) => void;
 }
 
+/**
+ * v1.0.0.9: تایپ tuple [min, max] — هماهنگ با useFilterStore
+ */
 export function PriceFilter({ value, onChange }: PriceFilterProps) {
   return (
     <Box sx={{ px: 1 }}>
       <Slider
         getAriaLabel={() => "Price range"}
         value={value}
-        onChange={(_, newValue) => onChange(newValue as number[])}
+        onChange={(_, newValue) => onChange(newValue as PriceRange)}
         min={100000}
         max={10000000}
         step={100000}

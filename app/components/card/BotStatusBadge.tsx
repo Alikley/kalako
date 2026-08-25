@@ -1,8 +1,9 @@
 interface BotStatusMeta {
   connectionError?: boolean;
   searching?: boolean;
-  botError?: string;
-  botHint?: string;
+  /** v1.0.0.9: null هم پذیرفته می‌شود — هماهنگ با BotMeta در useProducts */
+  botError?: string | null;
+  botHint?: string | null;
   stale?: boolean;
 }
 
