@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { CATEGORIES } from "@/hook/useStore";
 import { FilterSidebar } from "@/app/components/FilterSidebar";
 import type { Product } from "@/hook/useStore";
+import { mapApiProduct } from "@/hook/useProducts";
 import { formatPrice } from "@/lib/utils";
 import { useDocumentTitle } from "@/hook/useDocumentTitle";
 
@@ -13,11 +14,21 @@ function CategoryProducts({ cat }: { cat: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // v1.0.3.0: cat حالا اسم گروه ۷گانه‌ست — API سمت خودش گروه رو به انواع ظریف
-    // تبدیل میکنه (حداکثر 200 پست) + limit برای یک صفحه کامل
-    fetch(`/api/products?cat=${encodeURIComponent(cat)}&limit=200`)
+    // v1.0.4.0: دسته‌بندی = سرچ — مثل سرچ‌بار، از مسیر /api/search (سرچ
+    // گروهی بات v1.1.5.0: همه انواع گروه → تا ۲۰۰ پست) — نه از DB محصولات
+    // صفحه اصلی (کاربر: «دسته بندی ها وصل نباشه به محصولاتی که در صفحه
+    // اصلی نشون میدی... وصل باشه به دیتابیس سرچ»)
+    setLoading(true);
+    fetch("/api/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: cat }),
+      signal: AbortSignal.timeout(90000),
+    })
       .then((r) => r.json())
-      .then((d) => setProducts(d.products || []))
+      .then((d) => {
+        setProducts((d.products || []).map(mapApiProduct));
+      })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, [cat]);
@@ -42,6 +53,9 @@ function CategoryProducts({ cat }: { cat: string }) {
     return (
       <div className="text-center py-20">
         <p className="text-kalako-slate-500">محصولی برای این دسته‌بندی یافت نشد</p>
+        <p className="text-xs text-kalako-slate-400 mt-2">
+          جستجوی مستقیم تلگرام انجام شد ولی محصولی یافت نشد
+        </p>
       </div>
     );
   }

@@ -17,17 +17,16 @@ export interface BotMeta {
 }
 
 /**
- * v1.0.3.0: حالت دسته‌بندی + رفع باگ سینتکسی v1.0.2.0
+ * v1.0.4.0: حالت دسته‌بندی حذف شد — دسته‌بندی‌ها حالا «سرچ گروهی» هستن
  *
- * جدید (v1.0.3.0):
- *  - category mode: وقتی کاربر از نوبار روی یکی از ۷ گروه دسته‌بندی کلیک
- *    میکنه (/?cat=<گروه>)، محصولات همون گروه با cap ‏200 پست fetch میشن
- *    (کاربر: «هرکدوم گزینه دست بندی 200 تا پست»)
- *  - fetchAllForFilter حالا cat هم قبول میکنه تا فیلتر باکس داخل دسته‌بندی
- *    روی همه محصولات اون دسته اعمال بشه (بدون pagination طبق گام ۳ قبل)
+ * کاربر: «میخوام دسته بندی ها وصل نباشه به محصولاتی که در صفحه اصلی نشون
+ *         میدی... وقتی کاربر زد مثلا پوشاک یه جست جو باشه نه از دیتابیس
+ *         صفحه اصلی وصل باشه به دیتابیس سرچ»
  *
- * فیکس (v1.0.3.0): خط ۳۷ نسخه قبل خراب بود («const eta, setMeta]») و
- * باعث ارور سینتکس tsc می‌شد — به «const [meta, setMeta]» اصلاح شد.
+ *  - category/setCategory/clearCategory و پارامتر cat حذف شدن — نمای
+ *    دسته‌بندی حالا از مسیر useSearchProducts (/api/search — سرچ گروهی بات)
+ *    جواب می‌گیره (ProductCards این کار رو انجام میده)
+ *  - fetchAllForFilter فقط برای حالت فیلتر صفحه اصلی (بدون دسته) کار میکنه
  *
  * v1.0.2.0: PRODUCTS_PER_PAGE = 24 (pagination حالت عادی)
  */
@@ -42,18 +41,14 @@ export function useProducts() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  // v1.0.3.0: حالت دسته‌بندی — گروه فعال ("" یعنی حالت عادی)
-  const [category, setCategoryState] = useState("");
-
   // v1.0.1.0: state برای حالت فیلتر — وقتی فیلتر فعال است،
   // کل محصولات (نه فقط صفحه فعلی) fetch می‌شن تا فیلتر روی همه اعمال بشه
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [allLoading, setAllLoading] = useState(false);
   const [allFetched, setAllFetched] = useState(false);
 
-  const fetchProducts = useCallback(async (p?: number, cat?: string) => {
+  const fetchProducts = useCallback(async (p?: number) => {
     const targetPage = p ?? page;
-    const targetCat = cat ?? category;
     setLoading(true);
     setError(null);
     setMeta(null);
@@ -61,8 +56,6 @@ export function useProducts() {
       const params = new URLSearchParams();
       params.set("page", String(targetPage));
       params.set("limit", String(PRODUCTS_PER_PAGE));
-      // v1.0.3.0: در حالت دسته‌بندی، گروه به API پاس میشه (فیلتر سمت سرور)
-      if (targetCat) params.set("cat", targetCat);
 
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -86,7 +79,7 @@ export function useProducts() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, category]);
+  }, [page]);
 
   useEffect(() => {
     fetchProducts();
@@ -100,35 +93,12 @@ export function useProducts() {
   }, [totalPages, fetchProducts]);
 
   /**
-   * v1.0.3.0: ورود به حالت دسته‌بندی — محصولات گروه fetch میشه
-   * (cap ‏200 پست سمت API؛ pagination با PRODUCTS_PER_PAGE)
-   */
-  const setCategory = useCallback((group: string) => {
-    setCategoryState(group);
-    setAllFetched(false);
-    setAllProducts([]);
-    fetchProducts(1, group);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchProducts]);
-
-  /**
-   * v1.0.3.0: خروج از حالت دسته‌بندی — بازگشت به همه محصولات
-   */
-  const clearCategory = useCallback(() => {
-    setCategoryState("");
-    setAllFetched(false);
-    setAllProducts([]);
-    fetchProducts(1, "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchProducts]);
-
-  /**
    * v1.0.2.0: fetch همه محصولات برای حالت فیلتر (با interleave=0)
    *
    * کاربر (گام ۳): «وقتی فیلتر اعمال میشه... پجنیشین رو بردار»
    *
-   * v1.0.3.0: در حالت دسته‌بندی، cat=<گروه> هم پاس میشه تا فیلتر روی همه
-   * محصولات همون دسته (حداکثر 200) اعمال بشه.
+   * v1.0.4.0: پارامتر cat حذف شد — داخل دسته‌بندی فیلترها روی نتایج سرچ
+   * گروهی اعمال میشن (سمت کلاینت)، نه روی DB محصولات.
    */
   const fetchAllForFilter = useCallback(async () => {
     if (allFetched || allLoading) return;
@@ -139,8 +109,6 @@ export function useProducts() {
       params.set("limit", "1000");
       // v1.0.2.0: interleave=0 → حالت raw (همه محصولات، بدون cap کانال)
       params.set("interleave", "0");
-      // v1.0.3.0: در حالت دسته‌بندی، کل محصولات اون دسته
-      if (category) params.set("cat", category);
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -154,7 +122,7 @@ export function useProducts() {
       setAllLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allFetched, allLoading, category]);
+  }, [allFetched, allLoading]);
 
   const resetAllForFilter = useCallback(() => {
     setAllFetched(false);
@@ -171,10 +139,6 @@ export function useProducts() {
     total,
     setPage: goToPage,
     refetch: fetchProducts,
-    // v1.0.3.0: حالت دسته‌بندی
-    category,
-    setCategory,
-    clearCategory,
     // v1.0.1.0: state و تابع برای حالت فیلتر
     allProducts,
     allLoading,

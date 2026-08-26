@@ -9,8 +9,9 @@ import { CartIcon, HeartIcon, UserIcon } from "./NavbarIcons";
 import { DropItem } from "./NavDropdown";
 
 /**
- * v1.0.3.0: کلیک روی گروه دسته‌بندی در منوی موبایل → نمای دسته‌بندی
- * (همانند نوار دسکتاپ — به /?cat=<گروه> هدایت می‌شه، حداکثر 200 پست)
+ * v1.0.4.0: کلیک روی گروه دسته‌بندی در منوی موبایل → سرچ گروهی
+ * (همانند نوار دسکتاپ — به /?cat=<گروه> هدایت می‌شه؛ ProductCards سرچ
+ * گروهی رو از مسیر /api/search اجرا می‌کنه، تا ۲۰۰ پست)
  */
 function categoryNavMobile(group: string, closeFn: () => void) {
   closeFn();
