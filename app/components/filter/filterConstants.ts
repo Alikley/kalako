@@ -1,4 +1,5 @@
 import { createTheme } from "@mui/material";
+import { ALL_TYPES } from "@/lib/categoryGroups";
 
 export const muiTheme = createTheme({
   direction: "rtl",
@@ -55,23 +56,18 @@ export const muiTheme = createTheme({
 
 /**
  * v1.0.0.9: دسته‌های فیلتر با داده واقعی بات هماهنگ شد
- * (CLOTHING_HASHTAG_MAP بات: تی‌شرت، شلوار، کتونی، کفش، لباس، هودی، مانتو، پالتو، شورت، لوازم خانه)
- * دسته‌های قبلی «لباس بالاتنه» و «کت و شلوار مجلسی» در داده بات وجود نداشتند و نتیجه خالی می‌دادند
+ *
+ * v1.0.3.0: حالت دیفالت باکس فیلتر = کل هشتگ‌ها (کاربر: «در حالت دیفالت
+ * میخوام باکس فیلتر کل هشتگ های هست رو نشون بده») — هر ۲۶ نوع ظریف
+ * از ۷ گروه دسته‌بندی (lib/categoryGroups.ts).
+ * وقتی کاربر داخل یک دسته‌بندی باشه، CategoryFilter گزینه‌های همون گروه
+ * رو نشون میده (options prop).
  */
 export const FILTER_ALL = "همه";
 
 export const FILTER_CATEGORIES = [
   FILTER_ALL,
-  "کفش",
-  "کتونی",
-  "تی‌شرت",
-  "شلوار",
-  "لباس",
-  "هودی",
-  "مانتو",
-  "پالتو",
-  "شورت",
-  "لوازم خانه",
+  ...ALL_TYPES,
 ];
 
 /**

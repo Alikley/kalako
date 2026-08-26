@@ -13,7 +13,9 @@ function CategoryProducts({ cat }: { cat: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/products?cat=${encodeURIComponent(cat)}`)
+    // v1.0.3.0: cat حالا اسم گروه ۷گانه‌ست — API سمت خودش گروه رو به انواع ظریف
+    // تبدیل میکنه (حداکثر 200 پست) + limit برای یک صفحه کامل
+    fetch(`/api/products?cat=${encodeURIComponent(cat)}&limit=200`)
       .then((r) => r.json())
       .then((d) => setProducts(d.products || []))
       .catch(() => setProducts([]))
@@ -77,10 +79,11 @@ function CategoriesContent() {
               دسته‌بندی‌ها
             </h1>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {/* v1.0.3.0: کلیک روی گروه → نمای دسته‌بندی صفحه اصلی (/?cat=) */}
               {CATEGORIES.map((c) => (
                 <a
                   key={c}
-                  href={`/categories?cat=${encodeURIComponent(c)}`}
+                  href={`/?cat=${encodeURIComponent(c)}`}
                   className="bg-kalako-cream hover:bg-kalako-orange/10 rounded-2xl p-6 text-center font-medium text-kalako-navy hover:text-kalako-orange transition-colors"
                 >
                   {c}

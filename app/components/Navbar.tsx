@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { KalakoLogo } from "./KalakoLogo";
-import { useStore, CATEGORIES, BRANDS } from "@/hook/useStore";
+import { useStore, CATEGORIES } from "@/hook/useStore";
 import { HeartIcon, CartIcon, UserIcon } from "./navbar/NavbarIcons";
 import { NavDropdown, DropItem } from "./navbar/NavDropdown";
 import { UserDropdown } from "./navbar/UserDropdown";
@@ -22,18 +22,18 @@ function handleLogoClick(e: React.MouseEvent<HTMLAnchorElement>) {
 }
 
 /**
- * v1.0.1.0: کلیک روی دسته/برند → مثل سرچ عمل کنه
- * کاربر: «توی قسمت نوبار دوتا گزینه هست که برند ها دسته بندی ها اینارو اگه
- *         کاربر هرکدوم گزینه رو زد میخوام شبیه سرچ عمل کنه یعنی بره بگرده
- *         طبق چیزی که توی سرچ اعمال کردیم اینجا هم اعمال کنیم»
+ * v1.0.3.0: کلیک روی گروه دسته‌بندی → نمای دسته‌بندی (/?cat=<گروه>)
  *
- * راه‌حل: هدایت به /?q=<value> — در صفحه اصلی، ProductCards یک useEffect داره
- * که query param `q` رو می‌خونه و سرچ رو اجرا می‌کنه.
- * از window.location.href استفاده می‌کنیم (نه router.push) تا hard navigation
- * باشه و state فیلتر/سرچ قبلی ریست بشه.
+ * کاربر: «گزینه دسته بندی هارو طبق چیزی که من میگم من میگم دسته بندی کن فقط
+ *         تایتل رو توی دسته بندی نشون بده وقتی اونو کاربر زد اون چیزی که
+ *         های هست رو پیدا کن و نشون بده»
+ *
+ * فقط ۷ تایتل گروه تو دراپ‌داون نشون داده میشه؛ کلیک → /?cat=<گروه> →
+ * ProductCards حالت دسته‌بندی رو فعال میکنه (حداکثر 200 پست همون گروه).
+ * hard navigation تا state فیلتر/سرچ قبلی ریست بشه.
  */
-function searchLikeNav(value: string) {
-  window.location.href = "/?q=" + encodeURIComponent(value);
+function categoryNav(group: string) {
+  window.location.href = "/?cat=" + encodeURIComponent(group);
 }
 
 export function Navbar() {
@@ -63,23 +63,16 @@ export function Navbar() {
             {"خانه"}
           </Link>
 
-          {/* v1.0.1.0: دسته‌بندی‌ها مثل سرچ عمل کنن (به‌جای صفحه /categories) */}
+          {/* v1.0.3.0: دسته‌بندی‌ها — فقط ۷ تایتل گروه؛ کلیک → /?cat=<گروه> */}
           <NavDropdown label="دسته‌بندی‌ها">
             {CATEGORIES.map((c) => (
-              <DropItem key={c} onClick={() => searchLikeNav(c)}>
+              <DropItem key={c} onClick={() => categoryNav(c)}>
                 {c}
               </DropItem>
             ))}
           </NavDropdown>
 
-          {/* v1.0.1.0: برندها مثل سرچ عمل کنن (به‌جای صفحه /brands) */}
-          <NavDropdown label="برندها">
-            {BRANDS.map((b) => (
-              <DropItem key={b} onClick={() => searchLikeNav(b)}>
-                {b}
-              </DropItem>
-            ))}
-          </NavDropdown>
+          {/* v1.0.3.0: برندها از نوبار حذف شد (کاربر: «گزینه برند هارو توی نوبار حذف کنی») */}
 
           <NavDropdown label="تخفیف‌ها">
             {CATEGORIES.map((c) => (

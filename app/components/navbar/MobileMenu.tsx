@@ -4,17 +4,17 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { KalakoLogo } from "../KalakoLogo";
-import { useStore, CATEGORIES, BRANDS } from "@/hook/useStore";
+import { useStore, CATEGORIES } from "@/hook/useStore";
 import { CartIcon, HeartIcon, UserIcon } from "./NavbarIcons";
 import { DropItem } from "./NavDropdown";
 
 /**
- * v1.0.1.0: کلیک روی دسته/برند در منوی موبایل → مثل سرچ عمل کنه
- * (همانند نوار دسکتاپ — به /?q=<value> هدایت می‌شه)
+ * v1.0.3.0: کلیک روی گروه دسته‌بندی در منوی موبایل → نمای دسته‌بندی
+ * (همانند نوار دسکتاپ — به /?cat=<گروه> هدایت می‌شه، حداکثر 200 پست)
  */
-function searchLikeNavMobile(value: string, closeFn: () => void) {
+function categoryNavMobile(group: string, closeFn: () => void) {
   closeFn();
-  window.location.href = "/?q=" + encodeURIComponent(value);
+  window.location.href = "/?cat=" + encodeURIComponent(group);
 }
 
 export function MobileMenu() {
@@ -89,18 +89,13 @@ export function MobileMenu() {
           <DropItem href="/">
             {"خانه"}
           </DropItem>
-          {/* v1.0.1.0: دسته‌بندی‌ها مثل سرچ عمل کنن (به‌جای صفحه /categories) */}
+          {/* v1.0.3.0: فقط ۷ تایتل گروه دسته‌بندی — کلیک → /?cat=<گروه> */}
           {CATEGORIES.map((c) => (
-            <DropItem key={c} onClick={() => searchLikeNavMobile(c, () => setOpen(false))}>
+            <DropItem key={c} onClick={() => categoryNavMobile(c, () => setOpen(false))}>
               {c}
             </DropItem>
           ))}
-          {/* v1.0.1.0: برندها مثل سرچ عمل کنن (به‌جای صفحه /brands) */}
-          {BRANDS.slice(0, 8).map((b) => (
-            <DropItem key={b} onClick={() => searchLikeNavMobile(b, () => setOpen(false))}>
-              {b}
-            </DropItem>
-          ))}
+          {/* v1.0.3.0: برندها از منو حذف شد (مطابق نوبار) */}
           {CATEGORIES.map((c) => (
             <DropItem
               key={`d-${c}`}

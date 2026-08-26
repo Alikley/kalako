@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useSession } from "next-auth/react";
+import { GROUP_TITLES } from "@/lib/categoryGroups";
 
 /**
  * v1.0.0.7.13:
@@ -28,18 +29,13 @@ export interface Product {
   gender?: string;
 }
 
-export const CATEGORIES = [
-  "تی‌شرت",
-  "شلوار",
-  "کتونی",
-  "کفش",
-  "لباس",
-  "هودی",
-  "مانتو",
-  "پالتو",
-  "شورت",
-  "لوازم خانه",
-];
+/**
+ * v1.0.3.0: دسته‌بندی‌ها = ۷ گروه اصلی (کاربر: «فقط تایتل رو توی دسته بندی
+ * نشون بده») — هماهنگ با CATEGORY_GROUPS بات v1.1.4.0
+ * پوشاک / لوازم برقی خانه / لوازم خانه / موبایل / لب تاپ /
+ * لوازم جانبی موبایل / کتاب
+ */
+export const CATEGORIES = GROUP_TITLES;
 
 export const BRANDS = [
   "نایکی", "آدیداس", "پوما", "ریبوک",

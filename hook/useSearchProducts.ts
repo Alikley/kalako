@@ -10,6 +10,9 @@ import { mapApiProduct } from "./useProducts";
  * - نتایج سرچ وب حداکثر 50 محصول است (WEB_SEARCH_LIMIT در بات)
  * - با 50، همه نتایج در یک صفحه قرار می‌گیرن و فیلتر روی همه اعمال میشه
  * - pagination فقط وقتی نمایش داده میشه که نتایج بیشتر از 50 باشن (نادر)
+ *
+ * v1.0.3.0: رفع باگ سینتکسی نسخه قبل — خط «const int, setHint]» خراب بود
+ * (ارور tsc) و به «const [hint, setHint]» اصلاح شد.
  */
 const SEARCH_PAGE_SIZE = 50;
 

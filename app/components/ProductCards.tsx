@@ -8,6 +8,7 @@ import {
   applyProductFilters,
   hasActiveFilters,
 } from "@/lib/productFilters";
+import { isGroupTitle } from "@/lib/categoryGroups";
 import { ProductCard } from "./card/ProductCard";
 import { LoadingSkeleton } from "./card/LoadingSkeleton";
 import { BotStatusBadge } from "./card/BotStatusBadge";
@@ -15,9 +16,21 @@ import { EmptyState } from "./card/EmptyState";
 import { Pagination } from "./Pagination";
 
 /**
- * v1.0.2.0: حالت فیلتر — بدون pagination محلی
+ * v1.0.3.0: حالت دسته‌بندی (category view)
  *
- * کاربر (گام ۳): «وقتی فیلتر اعمال میشه روی محصولات پجینشین رو بردار»
+ * کاربر: «میخوام وقتی کاربر روی دسته بندی ها کلیک کرد... اون چیزی که های هست
+ *         رو پیدا کن و نشون بده و هرکدوم گزینه دست بندی 200 تا پست»
+ *
+ *  - کلیک روی یکی از ۷ گروه توی نوبار → /?cat=<گروه> → این کامپوننت پارامتر
+ *    رو می‌خونه و حالت دسته‌بندی رو فعال میکنه
+ *  - محصولات گروه با cap ‏200 پست از API میاد (فیلتر سمت سرور route)
+ *  - pagination فعال هست (24 در صفحه) — چون فیلتر باکس اعمال نشده
+ *  - وقتی فیلتر باکس فعال بشه → کل محصولات دسته fetch میشه و همه نتایج
+ *    فیلترشده بدون pagination نمایش داده میشن (قانون گام ۳ از v1.0.2.0)
+ *  - باکس فیلتر هم فقط گزینه‌های همون گروه رو نشون میده (activeCategoryGroup
+ *    در useFilterStore ست میشه)
+ *
+ * v1.0.2.0: حالت فیلتر — بدون pagination محلی
  * - وقتی فیلتر فعال باشه، همه نتایج فیلترشده در یک صفحه نمایش داده میشن
  * - pagination فقط در حالت عادی (بدون فیلتر) کار می‌کنه
  * - fetchAllForFilter با interleave=0 همه محصولات رو می‌گیره
@@ -52,9 +65,49 @@ function FilterStatusBar({
   );
 }
 
+/** v1.0.3.0: هدر حالت دسته‌بندی — عنوان گروه + دکمه بازگشت */
+function CategoryHeader({
+  title,
+  onClear,
+}: {
+  title: string;
+  onClear: () => void;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-kalako-slate-200 bg-kalako-cream px-4 py-3">
+      <h2 className="text-base font-bold text-kalako-navy">
+        دسته‌بندی: <span className="text-kalako-orange">{title}</span>
+      </h2>
+      <button
+        onClick={onClear}
+        className="text-[13px] font-bold text-kalako-navy/70 hover:text-kalako-navy transition-colors"
+      >
+        ← بازگشت به همه محصولات
+      </button>
+    </div>
+  );
+}
+
 export function ProductCards() {
-  const { products, loading, error, meta, page, totalPages, total, setPage, refetch,
-          allProducts, allLoading, allFetched, fetchAllForFilter, resetAllForFilter } = useProducts();
+  const {
+    products,
+    loading,
+    error,
+    meta,
+    page,
+    totalPages,
+    total,
+    setPage,
+    refetch,
+    category,
+    setCategory,
+    clearCategory,
+    allProducts,
+    allLoading,
+    allFetched,
+    fetchAllForFilter,
+    resetAllForFilter,
+  } = useProducts();
   const {
     products: searchResults,
     loading: searchLoading,
@@ -72,18 +125,43 @@ export function ProductCards() {
 
   // v1.0.0.9: فیلترهای سایدبار از استور مشترک
   // (selectorهای جداگانه — در zustand v5 برگرداندن آبجکت جدید از selector یکجا = loop رندر)
-  const category = useFilterStore((s) => s.category);
+  const category1 = useFilterStore((s) => s.category);
   const gender = useFilterStore((s) => s.gender);
   const priceRange = useFilterStore((s) => s.priceRange);
   const colors = useFilterStore((s) => s.colors);
   const resetFilters = useFilterStore((s) => s.reset);
-  const filtering = hasActiveFilters({ category, gender, priceRange, colors });
+  const setActiveCategoryGroup = useFilterStore((s) => s.setActiveCategoryGroup);
+  const filtering = hasActiveFilters({ category: category1, gender, priceRange, colors });
 
   const gridRef = React.useRef<HTMLDivElement>(null);
+
+  // v1.0.3.0: خواندن query param `cat` از URL → فعال کردن حالت دسته‌بندی
+  // کلیک روی گروه‌های نوبار به /?cat=<گروه> میره (hard navigation تا state
+  // فیلتر/سرچ قبلی ریست بشه)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get("cat");
+    if (cat && isGroupTitle(cat)) {
+      setCategory(cat);
+      setActiveCategoryGroup(cat);
+      // پاک کردن query param از URL تا رفرش مجدد دوباره fetch نکنه
+      // (state دسته‌بندی حفظ میشه)
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("cat");
+        window.history.replaceState({}, "", url.toString());
+      } catch {
+        // ignore
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // v1.0.2.0: حالت فیلتر بدون pagination محلی هست (همه نتایج در یک صفحه)
   // وقتی فیلتر فعال است (no-search mode)، کل محصولات رو fetch کن
   // تا فیلتر روی همه اعمال بشه (نه فقط صفحه فعلی)
+  // v1.0.3.0: داخل حالت دسته‌بندی هم fetchAllForFilter با cat=<گروه> کار میکنه
   React.useEffect(() => {
     if (filtering && !searchMode && !allFetched && !allLoading) {
       fetchAllForFilter();
@@ -94,19 +172,17 @@ export function ProductCards() {
     }
   }, [filtering, searchMode, allFetched, allLoading, fetchAllForFilter, resetAllForFilter]);
 
-  // v1.0.2.0: وقتی فیلتر تغییر می‌کنه، فقط scroll ریست بشه (نه pagination — دیگه pagination محلی نیست)
-
   // v1.0.2.0: اعمال فیلتر روی کل محصولات (حالت no-search + filtering)
   // همه نتایج فیلترشده بدون pagination نمایش داده میشن
   const filteredAllProducts = React.useMemo(
-    () => applyProductFilters(allProducts, { category, gender, priceRange, colors }),
-    [allProducts, category, gender, priceRange, colors]
+    () => applyProductFilters(allProducts, { category: category1, gender, priceRange, colors }),
+    [allProducts, category1, gender, priceRange, colors]
   );
 
   // v1.0.0.9: اعمال فیلتر روی نتایج جستجو
   const filteredSearchResults = React.useMemo(
-    () => applyProductFilters(searchResults, { category, gender, priceRange, colors }),
-    [searchResults, category, gender, priceRange, colors]
+    () => applyProductFilters(searchResults, { category: category1, gender, priceRange, colors }),
+    [searchResults, category1, gender, priceRange, colors]
   );
 
   const handlePageChange = React.useCallback((p: number) => {
@@ -119,6 +195,14 @@ export function ProductCards() {
     gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [goToSearchPage]);
 
+  // v1.0.3.0: خروج از دسته‌بندی — گروه رو از استور فیلتر هم پاک کن
+  const handleClearCategory = React.useCallback(() => {
+    clearCategory();
+    setActiveCategoryGroup("");
+    resetAllForFilter();
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [clearCategory, setActiveCategoryGroup, resetAllForFilter]);
+
   React.useEffect(() => {
     const handler = (e: any) => {
       if (e.detail?.query) {
@@ -130,8 +214,6 @@ export function ProductCards() {
   }, [search]);
 
   // v1.0.1.0: خواندن query param `q` از URL و اجرای سرچ
-  // کاربر: «توی قسمت نوبار دوتا گزینه هست که برند ها دسته بندی ها اینارو اگه
-  //         کاربر هرکدوم گزینه رو زد میخوام شبیه سرچ عمل کنه»
   // وقتی کاربر روی دسته/برند در نوبار کلیک می‌کنه، به /?q=<value> می‌ره
   // و این useEffect آن را می‌خواند و سرچ می‌کند.
   React.useEffect(() => {
@@ -149,7 +231,8 @@ export function ProductCards() {
         // ignore
       }
     }
-  }, [search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (searchLoading) return <LoadingSkeleton />;
 
@@ -257,7 +340,7 @@ export function ProductCards() {
     );
   }
 
-  if (products.length === 0) {
+  if (products.length === 0 && !category) {
     return (
       <EmptyState
         icon="info"
@@ -284,6 +367,7 @@ export function ProductCards() {
   // فیلتر روی کل محصولات (allProducts با interleave=0) اعمال میشه
   // همه نتایج فیلترشده در یک صفحه نمایش داده میشن (کاربر: «وقتی فیلتر اعمال
   // میشه روی محصولات پجینشین رو بردار»)
+  // v1.0.3.0: داخل دسته‌بندی هم همین قانون (allProducts = کل دسته)
   if (filtering) {
     if (allLoading && allProducts.length === 0) {
       return <LoadingSkeleton />;
@@ -292,25 +376,44 @@ export function ProductCards() {
       <div className="flex-1 min-w-0">
         <div ref={gridRef} />
         <BotStatusBadge meta={meta} />
+        {category && (
+          <CategoryHeader title={category} onClear={handleClearCategory} />
+        )}
         <FilterStatusBar
           shown={filteredAllProducts.length}
           total={allProducts.length}
           onReset={resetFilters}
         />
         {filteredAllProducts.length === 0 ? (
-          <EmptyState
-            icon="filter"
-            title="با این فیلترها محصولی پیدا نشد"
-            subtitle="فیلترها را تغییر دهید یا حذف کنید"
-            actions={
-              <button
-                onClick={resetFilters}
-                className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
-              >
-                {"حذف فیلترها"}
-              </button>
-            }
-          />
+          allProducts.length === 0 ? (
+            <EmptyState
+              icon="info"
+              title="در این دسته‌بندی محصولی پیدا نشد"
+              subtitle="ربات هنوز داره محصولات این دسته رو جمع می‌کنه. کمی بعد دوباره تلاش کنید."
+              actions={
+                <button
+                  onClick={handleClearCategory}
+                  className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+                >
+                  {"بازگشت به همه محصولات"}
+                </button>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon="filter"
+              title="با این فیلترها محصولی پیدا نشد"
+              subtitle="فیلترها را تغییر دهید یا حذف کنید"
+              actions={
+                <button
+                  onClick={resetFilters}
+                  className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+                >
+                  {"حذف فیلترها"}
+                </button>
+              }
+            />
+          )
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredAllProducts.map((p) => (
@@ -323,16 +426,36 @@ export function ProductCards() {
     );
   }
 
-  // حالت no-search + no-filtering (حالت عادی)
+  // حالت no-search + no-filtering — عادی یا دسته‌بندی (v1.0.3.0)
+  // هر دو با pagination (کاربر گام ۳ قبلی: «پجینشین رو بیار دوباره»)
   return (
     <div className="flex-1 min-w-0">
       <div ref={gridRef} />
       <BotStatusBadge meta={meta} />
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
+      {category && (
+        <CategoryHeader title={category} onClear={handleClearCategory} />
+      )}
+      {products.length === 0 && category ? (
+        <EmptyState
+          icon="info"
+          title="در این دسته‌بندی محصولی پیدا نشد"
+          subtitle="ربات هنوز داره محصولات این دسته رو جمع می‌کنه. کمی بعد دوباره تلاش کنید."
+          actions={
+            <button
+              onClick={handleClearCategory}
+              className="text-kalako-orange hover:text-kalako-orange-hover text-sm font-medium"
+            >
+              {"بازگشت به همه محصولات"}
+            </button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
       <Pagination
         page={page}
         totalPages={totalPages}

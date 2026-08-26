@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Box, ThemeProvider, Button } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -10,6 +10,7 @@ import { CategoryFilter } from "./filter/CategoryFilter";
 import { GenderFilter } from "./filter/GenderFilter";
 import { PriceFilter } from "./filter/PriceFilter";
 import { ColorFilter } from "./filter/ColorFilter";
+import { typesOfGroup } from "@/lib/categoryGroups";
 import {
   useFilterStore,
   activeFilterCount,
@@ -36,6 +37,16 @@ export function FilterSidebar() {
   const [genderOpen, setGenderOpen] = useState(true);
   const [priceOpen, setPriceOpen] = useState(true);
   const [colorsOpen, setColorsOpen] = useState(false);
+
+  // v1.0.3.0: گروه دسته‌بندی فعال (از نوبار) — گزینه‌های باکس دسته رو
+  // تعیین میکنه: داخل دسته فقط زیرمجموعه همون گروه، در حالت دیفالت کل هشتگ‌ها
+  const activeCategoryGroup = useFilterStore((s) => s.activeCategoryGroup);
+  const categoryOptions = useMemo(() => {
+    if (activeCategoryGroup) {
+      return [FILTER_ALL, ...typesOfGroup(activeCategoryGroup)];
+    }
+    return undefined; // پیش‌فرض: FILTER_CATEGORIES (کل هشتگ‌ها)
+  }, [activeCategoryGroup]);
 
   const activeCount = activeFilterCount({ category, gender, priceRange, colors });
 
@@ -96,7 +107,11 @@ export function FilterSidebar() {
             open={categoryOpen}
             onToggle={() => setCategoryOpen(!categoryOpen)}
           >
-            <CategoryFilter value={categoryValue} onChange={setCategory} />
+            <CategoryFilter
+              value={categoryValue}
+              onChange={setCategory}
+              options={categoryOptions}
+            />
           </FilterSection>
 
           {/* Gender Section */}

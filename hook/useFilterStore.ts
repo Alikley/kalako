@@ -28,12 +28,21 @@ export interface FilterState {
   priceRange: PriceRange;
   /** رنگ‌های انتخاب‌شده (چندتایی) */
   colors: string[];
+  /**
+   * v1.0.3.0: گروه دسته‌بندی فعال از نوبار (مثل «پوشاک»)
+   * این «فیلتر» نیست — navigation هست (کاربر از نوبار یه دسته رو باز کرده)
+   * FilterSidebar با این میفهمه که باکس دسته چه گزینه‌هایی نشون بده.
+   * "" یعنی حالت دیفالت (همه محصولات، باکس فیلتر کل هشتگ‌ها)
+   */
+  activeCategoryGroup: string;
 
   setCategory: (category: string) => void;
   setGender: (gender: string) => void;
   setPriceRange: (range: PriceRange) => void;
   toggleColor: (color: string) => void;
   reset: () => void;
+  /** v1.0.3.0: ست کردن گروه فعال (بدون reset کردن فیلترها) */
+  setActiveCategoryGroup: (group: string) => void;
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
@@ -41,6 +50,7 @@ export const useFilterStore = create<FilterState>((set) => ({
   gender: "",
   priceRange: [...DEFAULT_PRICE_RANGE],
   colors: [],
+  activeCategoryGroup: "",
 
   setCategory: (category) => set({ category }),
   setGender: (gender) => set({ gender }),
@@ -58,6 +68,7 @@ export const useFilterStore = create<FilterState>((set) => ({
       priceRange: [...DEFAULT_PRICE_RANGE],
       colors: [],
     }),
+  setActiveCategoryGroup: (group) => set({ activeCategoryGroup: group }),
 }));
 
 /** چند فیلتر فعاله؟ (برای شمارنده روی سایدبار) */
