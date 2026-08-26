@@ -15,11 +15,13 @@ import { EmptyState } from "./card/EmptyState";
 import { Pagination } from "./Pagination";
 
 /**
- * v1.0.1.0: تعداد محصولات در هر صفحه برای حالت فیلتر
- * - نتایج فیلترشده معمولاً کمتر از 250 هستن، پس pagination نمایش داده نمیشه
- * - ولی اگه بیشتر باشه، صفحه‌بندی محلی فعال میشه
+ * v1.0.2.0: حالت فیلتر — بدون pagination محلی
+ *
+ * کاربر (گام ۳): «وقتی فیلتر اعمال میشه روی محصولات پجینشین رو بردار»
+ * - وقتی فیلتر فعال باشه، همه نتایج فیلترشده در یک صفحه نمایش داده میشن
+ * - pagination فقط در حالت عادی (بدون فیلتر) کار می‌کنه
+ * - fetchAllForFilter با interleave=0 همه محصولات رو می‌گیره
  */
-const FILTER_PAGE_SIZE = 250;
 
 /** v1.0.0.9: نوار وضعیت فیلتر — چند محصول بعد از فیلتر مانده + دکمه حذف */
 function FilterStatusBar({
@@ -79,10 +81,8 @@ export function ProductCards() {
 
   const gridRef = React.useRef<HTMLDivElement>(null);
 
-  // v1.0.1.0: صفحه‌بندی محلی برای حالت فیلتر (no-search mode)
-  const [filterPage, setFilterPage] = React.useState(1);
-
-  // v1.0.1.0: وقتی فیلتر فعال است (no-search mode)، کل محصولات رو fetch کن
+  // v1.0.2.0: حالت فیلتر بدون pagination محلی هست (همه نتایج در یک صفحه)
+  // وقتی فیلتر فعال است (no-search mode)، کل محصولات رو fetch کن
   // تا فیلتر روی همه اعمال بشه (نه فقط صفحه فعلی)
   React.useEffect(() => {
     if (filtering && !searchMode && !allFetched && !allLoading) {
@@ -91,26 +91,17 @@ export function ProductCards() {
     // وقتی فیلتر غیرفعال شد، state محلی ریست بشه تا دفعه بعد دوباره fetch کنه
     if (!filtering && allFetched) {
       resetAllForFilter();
-      setFilterPage(1);
     }
   }, [filtering, searchMode, allFetched, allLoading, fetchAllForFilter, resetAllForFilter]);
 
-  // v1.0.1.0: وقتی فیلتر تغییر می‌کنه، صفحه محلی ریست بشه
-  React.useEffect(() => {
-    setFilterPage(1);
-  }, [category, gender, priceRange, colors]);
+  // v1.0.2.0: وقتی فیلتر تغییر می‌کنه، فقط scroll ریست بشه (نه pagination — دیگه pagination محلی نیست)
 
-  // v1.0.1.0: اعمال فیلتر روی کل محصولات (حالت no-search + filtering)
+  // v1.0.2.0: اعمال فیلتر روی کل محصولات (حالت no-search + filtering)
+  // همه نتایج فیلترشده بدون pagination نمایش داده میشن
   const filteredAllProducts = React.useMemo(
     () => applyProductFilters(allProducts, { category, gender, priceRange, colors }),
     [allProducts, category, gender, priceRange, colors]
   );
-
-  // صفحه‌بندی محلی برای نتایج فیلترشده
-  const filterTotalPages = Math.max(1, Math.ceil(filteredAllProducts.length / FILTER_PAGE_SIZE));
-  const safeFilterPage = Math.min(filterPage, filterTotalPages);
-  const filterOffset = (safeFilterPage - 1) * FILTER_PAGE_SIZE;
-  const pagedFilteredProducts = filteredAllProducts.slice(filterOffset, filterOffset + FILTER_PAGE_SIZE);
 
   // v1.0.0.9: اعمال فیلتر روی نتایج جستجو
   const filteredSearchResults = React.useMemo(
@@ -127,11 +118,6 @@ export function ProductCards() {
     goToSearchPage(p);
     gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [goToSearchPage]);
-
-  const handleFilterPageChange = React.useCallback((p: number) => {
-    setFilterPage(p);
-    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
 
   React.useEffect(() => {
     const handler = (e: any) => {
@@ -294,8 +280,10 @@ export function ProductCards() {
     );
   }
 
-  // v1.0.1.0: حالت no-search + filtering
-  // فیلتر روی کل محصولات (allProducts) اعمال میشه، نه فقط صفحه فعلی
+  // v1.0.2.0: حالت no-search + filtering — بدون pagination
+  // فیلتر روی کل محصولات (allProducts با interleave=0) اعمال میشه
+  // همه نتایج فیلترشده در یک صفحه نمایش داده میشن (کاربر: «وقتی فیلتر اعمال
+  // میشه روی محصولات پجینشین رو بردار»)
   if (filtering) {
     if (allLoading && allProducts.length === 0) {
       return <LoadingSkeleton />;
@@ -325,17 +313,12 @@ export function ProductCards() {
           />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {pagedFilteredProducts.map((p) => (
+            {filteredAllProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
         )}
-        <Pagination
-          page={safeFilterPage}
-          totalPages={filterTotalPages}
-          total={filteredAllProducts.length}
-          onPageChange={handleFilterPageChange}
-        />
+        {/* v1.0.2.0: pagination در حالت فیلتر حذف شد — همه نتایج در یک صفحه */}
       </div>
     );
   }

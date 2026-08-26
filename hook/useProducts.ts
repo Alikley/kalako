@@ -17,12 +17,18 @@ export interface BotMeta {
 }
 
 /**
- * v1.0.1.0: افزایش PRODUCTS_PER_PAGE از 20 به 250
- * کاربر: «میخوام تعداد محصولات رو زیاد کنیم بکنیم دویصد پنجاه تا که نشون میده صفحه اصلی»
- * - با 250 محصول در یک صفحه، صفحه‌بندی فقط وقتی نمایش داده میشه که DB بیشتر از 250 داشته باشه
- * - وقتی فیلتر فعال باشه، ProductCards کل محصولات رو fetch می‌کنه و روی همه فیلتر می‌زنه
+ * v1.0.2.0: PRODUCTS_PER_PAGE از 250 به 24 برگردونده شد
+ *
+ * کاربر (گام ۳): «من بهت گفتم وقتی فیلتر اعمال میشه روی محصولات پجینشین رو
+ *                بردار نه کلا بچینشینی رو برداری خوب الا بر فرض 300 پست هست
+ *                کاربر چطوری بره بقیه رو ببینه... پجینشین رو بیار دوباره»
+ *
+ * با 24 محصول در هر صفحه:
+ *  - pagination کار می‌کنه (350 محصول → ۱۵ صفحه)
+ *  - وقتی فیلتر فعال باشه، ProductCards کل محصولات رو fetch می‌کنه (interleave=0)
+ *    و همه نتایج فیلترشده رو بدون pagination نمایش میده
  */
-const PRODUCTS_PER_PAGE = 250;
+const PRODUCTS_PER_PAGE = 24;
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -82,17 +88,16 @@ export function useProducts() {
   }, [totalPages, fetchProducts]);
 
   /**
-   * v1.0.1.0: fetch همه محصولات برای حالت فیلتر
+   * v1.0.2.0: fetch همه محصولات برای حالت فیلتر (با interleave=0)
    *
-   * کاربر: «وقتی فیلتر میکنم محصولات رو بعد پجینشین هم ولی با توجه به اینکه کلا
-   *         دوتا محصول رو نشون میده اینو درست کن»
+   * کاربر (گام ۳): «وقتی فیلتر اعمال میشه... پجنیشین رو بردار»
    *
-   * مشکل: فیلتر قبلاً فقط روی صفحه فعلی (۲۵۰ محصول) اعمال می‌شد. اگه فیلتر
-   * مثلاً فقط ۲ محصول مطابقت داشت، pagination بی‌معنی می‌شد و فقط ۲ محصول
-   * نشون داده می‌شد.
+   * این تابع با پارامتر interleave=0 از API درخواست می‌کنه تا بات همه محصولات رو
+   * (مرتب بر اساس تاریخ، بدون interleave و بدون cap کانال) برگردونه.
+   * سپس فیلتر سمت کلاینت روی همه اعمال میشه و همه نتایج بدون pagination نمایش داده میشن.
    *
-   * راه‌حل: وقتی فیلتر فعال است، کل محصولات (limit=500) رو fetch می‌کنیم
-   * و فیلتر رو روی همه اعمال می‌کنیم. سپس صفحه‌بندی محلی روی نتایج فیلترشده.
+   * نکته: limit=500 برای پوشش دادن ~350 محصول DB کافیه. اگه DB بزرگ‌تر شد،
+   * این عدد قابل افزایش هست.
    */
   const fetchAllForFilter = useCallback(async () => {
     if (allFetched || allLoading) return;
@@ -101,6 +106,8 @@ export function useProducts() {
       const params = new URLSearchParams();
       params.set("page", "1");
       params.set("limit", "500");
+      // v1.0.2.0: interleave=0 → حالت raw (همه محصولات، بدون cap کانال)
+      params.set("interleave", "0");
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
